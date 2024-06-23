@@ -1,0 +1,104 @@
+{
+	"name": "@cresteem/minomax",
+	"displayName": "Minomax",
+	"version": "0.0.1a",
+	"description": "Minomax is a powerful Node.js package designed to efficiently compress a wide range of web resources, including videos, images, HTML, CSS, JavaScript, and SVG files. Enhance your website's performance and reduce load times with Minomax's robust compression capabilities.",
+	"main": "./dist/minomax.js",
+	"exports": {
+		"import": "./dist/minomax.js",
+		"require": "./dist/minomax.js",
+		"types": "./dist/types/minomax.d.ts"
+	},
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "./dist/lib"
+	},
+	"engines": {
+		"node": "^16.0.0",
+		"npm": ">=10.5.0"
+	},
+	"preferGlobal": true,
+	"bin": {
+		"minomax": "./dist/bin/cli.js"
+	},
+	"repository": "https://github.com/cresteem/minomax",
+	"bugs": {
+		"url": "https://github.com/cresteem/minomax/issues"
+	},
+	"homepage": "https://www.cresteem.com/opensource/minomax",
+	"author": "CRESTEEM <connect@cresteem.com>",
+	"maintainers": [
+		"CRESTEEM <connect@cresteem.com>",
+		"DARSAN <darsan@cresteem.com>"
+	],
+	"license": "Apache-2.0",
+	"private": false,
+	"scripts": {
+		"dev": "rimraf dist && tsc -p tscdev.json && ncp ./minomax.config.json ./dist/minomax.config.json",
+		"dr": "cls && yarn dev && yarn rp",
+		"rp": "node ./dist/minomax.js",
+		"test": "jest --runInBand",
+		"build": "cls && eslint && rimraf dist && tsc -p tsconfig.json && ncp ./minomax.config.json ./dist/minomax.config.json",
+		"watch": "tsc --watch",
+		"clean": "cls && rimraf dist",
+		"deploy": "yarn test && yarn build && yarn publish --access public && git push"
+	},
+	"keywords": [
+		"web resource compression",
+		"video compression",
+		"image optimization",
+		"minomax",
+		"website performance",
+		"load time reduction",
+		"seo improvement",
+		"cresteem",
+		"html minification",
+		"css minification",
+		"javascript minification",
+		"svg compression",
+		"bandwidth reduction",
+		"compress",
+		"image",
+		"videos",
+		"encode",
+		"squoosh",
+		"handbrake",
+		"graphicmagick",
+		"gm",
+		"seo"
+	],
+	"dependencies": {
+		"@ffmpeg-installer/ffmpeg": "latest",
+		"@ffprobe-installer/ffprobe": "latest",
+		"@squoosh/lib": "0.5.3",
+		"cheerio": "1.0.0-rc.12",
+		"fluent-ffmpeg": "2.1.2",
+		"glob": "10.4.2",
+		"lodash": "4.17.21",
+		"pixteroid": "A:/Gitocal/Pixteroid",
+		"puppeteer": "21.11.0",
+		"sharp": "0.32.6",
+		"svgo": "3.3.2",
+		"twohandbrake": "^1.0.8",
+		"yargs": "17.7.2"
+	},
+	"devDependencies": {
+		"@babel/core": "7.24.5",
+		"@babel/preset-env": "7.24.5",
+		"@babel/preset-typescript": "7.24.1",
+		"@jest/test-sequencer": "29.7.0",
+		"@types/jest": "29.5.12",
+		"@types/node": "^20.14.8",
+		"babel-jest": "29.7.0",
+		"jest": "29.7.0",
+		"ncp": "2.0.0",
+		"rimraf": "5.0.5",
+		"ts-node": "10.9.2",
+		"typescript": "5.4.5"
+	},
+	"jest": {
+		"testSequencer": "./test/custom_test_sequence.js"
+	}
+}
