@@ -16,10 +16,6 @@ interface mozjpegOptions {
 	chroma_quality: number; //set only if seperate cq is enabled
 }
 
-interface jpgEncodeOptions {
-	mozjpeg: mozjpegOptions;
-}
-
 interface webpOption {
 	method: number; //effort 0-6
 	quality: number; //0-100
@@ -38,10 +34,6 @@ interface webpOption {
 	partitions: number; //0-3
 }
 
-interface webpEncodeOptions {
-	webp: webpOption;
-}
-
 interface avifOptions {
 	cqLevel: number; //quality (62-0)
 	subsample: number; //subsample chroma (1 / 0)
@@ -53,7 +45,15 @@ interface avifOptions {
 	speed: number; //max effort (10-0)
 }
 
-interface avifEncodeOptions {
+export interface jpgEncodeOptions {
+	mozjpeg: mozjpegOptions;
+}
+
+export interface webpEncodeOptions {
+	webp: webpOption;
+}
+
+export interface avifEncodeOptions {
 	avif: avifOptions;
 }
 
@@ -124,6 +124,8 @@ interface svgOptions {
 	plugins: Partial<svgoPlugings>[];
 }
 
+type screenSizesOptions = "1x" | "2x" | "3x" | "4x" | "5x" | "6x";
+
 interface imageSetConfigurations {
 	/* 
 	  Image set generator settings.
@@ -131,21 +133,23 @@ interface imageSetConfigurations {
 	  Pixel unit is used in size.
 	  Size always a upperlimit for each set (Example: x1:600) where 600px is upper limit
 	  */
-	screenSizes: {
-		"1X": number;
-		"2X": number;
-		"3X": number;
-		"4X": number;
-		"5X": number;
-	}; //Screen sizes upper-limits
+	screenSizes: Partial<Record<screenSizesOptions, number>>; //Screen sizes upper-limits
 	upscaleLevel: "l1" | "l2" | "l3";
 	fileSuffix: string;
 }
 
-export interface ConfigurationOptions {
+interface encodeOptions {
 	jpgEncodeOptions: jpgEncodeOptions;
 	webpEncodeOptions: webpEncodeOptions;
 	avifEncodeOptions: avifEncodeOptions;
 	svgOptions: svgOptions;
-	imageSetConfigurations: imageSetConfigurations;
+	cpuAllocation: number;
 }
+
+export interface ConfigurationOptions {
+	encodeOptions: encodeOptions;
+	imageSetConfigurations: imageSetConfigurations;
+	destPath: string;
+}
+
+export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";
