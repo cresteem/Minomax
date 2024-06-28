@@ -60,7 +60,7 @@ function _encodeImages(
 	//number of concurrent process.
 	/* 50 percentage of core count If there is no cpu allocation in Settings */
 	const threadCount: number =
-		cpuAllocation ?? Math.round((50 * cpus().length) / 100);
+		cpuAllocation ?? Math.floor((70 * cpus().length) / 100);
 
 	const pool = new ImagePool(threadCount);
 
