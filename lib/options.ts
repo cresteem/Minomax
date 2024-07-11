@@ -153,3 +153,38 @@ export interface ConfigurationOptions {
 }
 
 export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";
+
+export interface ImageTagsRecord {
+	htmlFile: string;
+	ImageRecords: SrcRecord[];
+}
+
+export class SrcRecord {
+	imageLink: string;
+	id: string;
+	classes: string[];
+	imageSizes: Record<string, number>;
+	attributes: ImageAttributes;
+
+	constructor(
+		imageLink: string,
+		id: string,
+		classes: string[],
+		imageSizes: Record<string, number>,
+		attributes: ImageAttributes,
+	) {
+		this.imageLink = imageLink; //String
+		this.id = id; //String
+		this.classes = classes; //Array
+		this.imageSizes = imageSizes;
+		this.attributes = attributes;
+	}
+}
+
+export interface ImageAttributes {
+	id: string;
+	class: string;
+	alt: string;
+	loading: string;
+	style: string;
+}

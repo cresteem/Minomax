@@ -1,61 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Page 2</title>
-    <link rel="stylesheet" href="css/test1.css" />
-    <link rel="stylesheet" href="css/home.css" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-    <style>
-      img {
-        height: auto;
-      }
-      #wrapper > .dp {
-        width: 1000px;
-      }
-      #dummy > .dp {
-        width: 1000px;
-      }
-      #wrapper#eye {
-        width: 1200px;
-      }
 
-      #batman {
-        width: 800px;
-      }
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/one.css" />
+	<link rel="stylesheet" href="./css/two.css" />
+	<title>Home</title>
+</head>
 
-      @media (max-width: 600px) {
-        img {
-          width: 60px !important;
-        }
-      }
-      @media (min-width: 601px) and (max-width: 1200px) {
-        img {
-          width: 6020px !important;
-        }
-      }
+<body>
+	<h1>Responsive Images</h1>
+	<div>
+		<img id="cat" src="./images/cat.jpg" alt="Cat" loading="lazy">
+		<img class="dog another" src="./images/dog.jpg" alt="Dog" style="width: 20px;">
+		<img id="horse" class="animal" src="./images/horse.jpg" alt="Horse" loading="eager">
+		<img class="flower" src="./images/flower.jpg" alt="Flower">
+	</div>
+</body>
 
-      @media (min-width: 1201px) and (max-width: 2000px) {
-        img {
-          width: 8800px !important;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <div id="wrapper">
-        <img
-          id="eye"
-          class="big-bg dp"
-          src="img/test1.jpg"
-          style="width: 300px; height: 200px; font-size: larger"
-          alt="test"
-        />
-        <img id="batman" class="sub-bg dp" src="img/test2.jpg" alt="test" />
-        <img id="jslib" class="tech" src="img/jquery.svg" alt="test" />
-      </div>
-    </main>
-  </body>
 </html>
