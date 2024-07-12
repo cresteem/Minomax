@@ -80,8 +80,8 @@ function _pictureTagMaker(
 		Record<string, string>
 	> = imgSetPathMaker(htmlsRecords);
 
-	const mediaTargets: number[] = Object.values(screenSizes);
-	const mediaTargetKeys: string[] = Object.keys(screenSizes);
+	const mediaTargets: number[] = Object.values(screenSizes).reverse();
+	const mediaTargetKeys: string[] = Object.keys(screenSizes).reverse();
 
 	for (const htmlRecords of htmlsRecords) {
 		pictureTags[htmlRecords.htmlFile] = [];
@@ -113,7 +113,7 @@ function _pictureTagMaker(
 				}
 
 				//closing img tag
-				pictureTag += ">";
+				pictureTag += "/>";
 			} else {
 				pictureTag = "<picture>";
 
@@ -126,10 +126,12 @@ function _pictureTagMaker(
 					pictureTag += `<source media="(max-width:${mediaTargets[index]}px)" srcset="${relativeSrcPath}">`;
 				}
 
-				//setting second level image as fallback "2x"=index 1
+				//setting second level image as fallback "2x"
 				const relativeSrcPath: string = relative(
 					dirname(htmlRecords.htmlFile),
-					imageSetsPaths[imageUniqueKey][mediaTargetKeys[1]],
+					imageSetsPaths[imageUniqueKey][
+						mediaTargetKeys[mediaTargetKeys.length - 2]
+					],
 				);
 
 				pictureTag += `<img src="${relativeSrcPath}" `;
@@ -146,7 +148,7 @@ function _pictureTagMaker(
 				}
 
 				//closing img tag and picture tag
-				pictureTag += "> </picture>";
+				pictureTag += "/> </picture>";
 			}
 
 			pictureTags[htmlRecords.htmlFile].push({
