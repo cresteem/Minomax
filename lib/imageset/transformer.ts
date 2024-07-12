@@ -6,9 +6,9 @@ import {
 	PictureTagMakerResponse,
 	SrcRecord,
 } from "lib/options";
-import { makeDirf } from "lib/utils";
 import { basename, dirname, extname, join, relative, resolve } from "path";
 import configurations from "../../configLoader";
+import { makeDirf } from "../utils";
 const {
 	imageSetConfigurations: { screenSizes },
 } = configurations;
@@ -212,7 +212,7 @@ function _videoThumbnailLinker(
 async function _imgTagTransformer(
 	htmlsRecords: ImageTagsRecord[],
 	batchSize: number = 5,
-) {
+): Promise<ImgTagTransResponse[]> {
 	//making picture tag for img tag
 	const pictureTags: Record<string, PictureTagMakerResponse[]> =
 		_pictureTagMaker(htmlsRecords);
@@ -281,7 +281,7 @@ export default async function transformer(
 	htmlsRecords: ImageTagsRecord[],
 	destinationBase: string = "dist",
 	batchSize: number = 5,
-) {
+): Promise<void> {
 	const transformedHtmls: ImgTagTransResponse[] = await _imgTagTransformer(
 		htmlsRecords,
 		batchSize,
@@ -292,7 +292,7 @@ export default async function transformer(
 	transformedHtmls.forEach((transformedHtml) => {
 		const newDestination: string = join(
 			destinationBase,
-			relative(".", transformedHtml.htmlFilePath),
+			relative(process.cwd(), transformedHtml.htmlFilePath),
 		);
 
 		const result: string = _videoThumbnailLinker(
@@ -320,6 +320,10 @@ export default async function transformer(
 	/* Activating batches */
 	for (const batch of promiseBatches) {
 		const activatedBatch: Promise<void>[] = batch.map((func) => func());
-		await Promise.all(activatedBatch);
+		try {
+			await Promise.all(activatedBatch);
+		} catch (err) {
+			console.log(err);
+		}
 	}
 }

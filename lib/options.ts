@@ -160,6 +160,7 @@ export interface ImageTagsRecord {
 }
 
 export class SrcRecord {
+	imgTagReference: string;
 	imageLink: string;
 	id: string;
 	classes: string[];
@@ -167,6 +168,7 @@ export class SrcRecord {
 	attributes: ImageAttributes;
 
 	constructor(
+		imgTagReference: string,
 		imageLink: string,
 		id: string,
 		classes: string[],
@@ -178,6 +180,7 @@ export class SrcRecord {
 		this.classes = classes; //Array
 		this.imageSizes = imageSizes;
 		this.attributes = attributes;
+		this.imgTagReference = imgTagReference;
 	}
 }
 
@@ -187,4 +190,29 @@ export interface ImageAttributes {
 	alt: string;
 	loading: string;
 	style: string;
+}
+
+export interface PictureTagMakerResponse {
+	imgTagReference: string;
+	newTag: string;
+}
+
+export interface ImgTagTransResponse {
+	htmlFilePath: string;
+	updatedContent: string;
+}
+
+export type ImageSetRecordType = Record<
+	string,
+	{ path: string; width: number }
+>;
+
+export interface ImageSetGenRecord {
+	baseImagePath: string;
+	imageSet: ImageSetRecordType;
+}
+
+export interface UpscalerResponse {
+	upscaledBaseimage: string;
+	upscaledBaseimageWidth: number;
 }
