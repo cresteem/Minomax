@@ -35,12 +35,14 @@ function _processImgTag(
 
 	//require attributes for (<picture>)imagesets of per img tag
 	const attributes: ImageAttributes = {
-		id: id,
+		id: id.slice(1),
 		class: classes,
 		alt: htmlTree(tag).attr("alt") ?? "",
 		loading: htmlTree(tag).attr("loading") ?? "",
 		style: htmlTree(tag).attr("style") ?? "",
 	};
+
+	const imgTagReference: string = htmlTree(tag).toString();
 
 	return new Promise((complete, reject) => {
 		const selectors: { id: string; classes: string[] } = {
@@ -51,6 +53,7 @@ function _processImgTag(
 		getImageSize(selectors, htmlfile, screenSizes)
 			.then((imageSizes) => {
 				const imageRecord: SrcRecord = new SrcRecord(
+					imgTagReference,
 					imageLink,
 					id,
 					classList,
