@@ -123,5 +123,20 @@
 		"upscaleLevel": "L1",
 		"fileSuffix": "_temp4setGen"
 	},
-	"destPath": "./dt"
+	"destPath": "./dt",
+	"webdoc": {
+		"htmloptions": {
+			"removeComments": true,
+			"removeRedundantAttributes": true,
+			"collapseWhitespace": true,
+			"html5": true,
+			"minifyCSS": true,
+			"minifyJS": true,
+			"quoteCharacter": "'",
+			"removeEmptyAttributes": true,
+			"removeScriptTypeAttributes": true,
+			"removeStyleLinkTypeAttributes": true,
+			"removeTagWhitespace": true
+		}
+	}
 }

@@ -146,10 +146,25 @@ interface encodeOptions {
 	cpuAllocation: number;
 }
 
+interface HtmlOptions {
+	removeComments: boolean;
+	removeRedundantAttributes: boolean;
+	collapseWhitespace: boolean;
+	html5: boolean;
+	minifyCSS: boolean;
+	minifyJS: boolean;
+	quoteCharacter: string;
+	removeEmptyAttributes: boolean;
+	removeScriptTypeAttributes: boolean;
+	removeStyleLinkTypeAttributes: boolean;
+	removeTagWhitespace: boolean;
+}
+
 export interface ConfigurationOptions {
 	encodeOptions: encodeOptions;
 	imageSetConfigurations: imageSetConfigurations;
 	destPath: string;
+	webdoc: { htmloptions: HtmlOptions };
 }
 
 export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";
@@ -215,4 +230,25 @@ export interface ImageSetGenRecord {
 export interface UpscalerResponse {
 	upscaledBaseimage: string;
 	upscaledBaseimageWidth: number;
+}
+
+export interface WebDocFileListerResponse {
+	cssContents: string;
+	webDocFiles: string[];
+}
+
+export interface UniqueSelectorsResponse {
+	uniqueClassNames: string[];
+	uniqueIds: string[];
+}
+
+export interface SelectorExtractorResponse {
+	uniqueClassNames: string[];
+	uniqueIds: string[];
+	webDocFiles: string[];
+}
+
+export interface NewNamesMakerResponse {
+	newSelectorsRecords: Record<string, string>;
+	webDocFiles: string[];
 }
