@@ -1438,14 +1438,6 @@
   dependencies:
     "@sinonjs/commons" "^3.0.0"
 
-"@squoosh/lib@0.5.3":
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/@squoosh/lib/-/lib-0.5.3.tgz#4ecfca5657db5fbdf6c20e85c2729ebce523ddb6"
-  integrity sha512-d/yn6M0P5rk+L0QOl/hzvlHDqXCCmEvwdcYu7sXwhyYDNskg9oxlZtZTBaKKbX6Vq0rzajI9GZkDC0zXlz/oRw==
-  dependencies:
-    wasm-feature-detect "^1.2.11"
-    web-streams-polyfill "^3.0.3"
-
 "@tootallnate/quickjs-emscripten@^0.23.0":
   version "0.23.0"
   resolved "https://registry.yarnpkg.com/@tootallnate/quickjs-emscripten/-/quickjs-emscripten-0.23.0.tgz#db4ecfd499a9765ab24002c3b696d02e6d32a12c"
@@ -3907,6 +3899,14 @@ regjsparser@^0.9.1:
   dependencies:
     jsesc "~0.5.0"
 
+remige@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/remige/-/remige-0.1.1.tgz#336c24186a5b0097c80678815d40f789773daea9"
+  integrity sha512-0686QHDRd1T/R3aRXRQlkq2helTrO9Q3eWhJQnAd3Ed3miuZHaJ2SZvK3O6Gsvl+8uD1Y/kkucLT1hn9R64ZMA==
+  dependencies:
+    wasm-feature-detect "^1.6.2"
+    web-streams-polyfill "^4.0.0"
+
 require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
@@ -4493,15 +4493,15 @@ walker@^1.0.8:
   dependencies:
     makeerror "1.0.12"
 
-wasm-feature-detect@^1.2.11:
+wasm-feature-detect@^1.6.2:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/wasm-feature-detect/-/wasm-feature-detect-1.6.2.tgz#d6229cae95311d82cc6c0c3b6934173c222ccbed"
   integrity sha512-4dnaZ+Fq/q+BbMlTIfaNS851i+0zmHzui++NUZdskESRu3xwB6g6x2FnGvBdWtpijqO5yuj1l+EUTJGc4S4DKg==
 
-web-streams-polyfill@^3.0.3:
-  version "3.3.3"
-  resolved "https://registry.yarnpkg.com/web-streams-polyfill/-/web-streams-polyfill-3.3.3.tgz#2073b91a2fdb1fbfbd401e7de0ac9f8214cecb4b"
-  integrity sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==
+web-streams-polyfill@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/web-streams-polyfill/-/web-streams-polyfill-4.0.0.tgz#74cedf168339ee6e709532f76c49313a8c7acdac"
+  integrity sha512-0zJXHRAYEjM2tUfZ2DiSOHAa2aw1tisnnhU3ufD57R8iefL+DcdJyRBRyJpG+NUimDgbTI/lH+gAE1PAvV3Cgw==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"

@@ -16,8 +16,7 @@
 		"lib": "./dist/lib"
 	},
 	"engines": {
-		"node": "^16.0.0",
-		"npm": ">=10.5.0"
+		"node": "*"
 	},
 	"preferGlobal": true,
 	"bin": {
@@ -72,7 +71,6 @@
 	"dependencies": {
 		"@ffmpeg-installer/ffmpeg": "latest",
 		"@ffprobe-installer/ffprobe": "latest",
-		"@squoosh/lib": "0.5.3",
 		"cheerio": "1.0.0-rc.12",
 		"css": "^3.0.0",
 		"fluent-ffmpeg": "2.1.2",
@@ -81,6 +79,7 @@
 		"lodash": "4.17.21",
 		"pixteroid": "1.0.1",
 		"puppeteer": "21.11.0",
+		"remige": "^0.1.1",
 		"sharp": "0.32.6",
 		"svgo": "3.3.2",
 		"yargs": "17.7.2"

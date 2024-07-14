@@ -1,8 +1,8 @@
-import { ImagePool } from "@squoosh/lib";
 import { appendFileSync, readFileSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { cpus } from "os";
 import { basename, dirname, extname, join, relative } from "path";
+import { ImagePool } from "remige";
 import { optimize } from "svgo";
 
 import configurations from "../configLoader";
@@ -89,11 +89,11 @@ function _encodeImages(
 								resolve();
 							})
 							.catch((err: Error) => {
-								reject(err.message);
+								reject(err);
 							});
 					})
 					.catch((err: Error) => {
-						reject(err.message);
+						reject(err);
 					});
 			});
 		},
@@ -109,11 +109,11 @@ function _encodeImages(
 						resolve();
 					})
 					.catch((err: Error) => {
-						reject(err.message);
+						reject(err);
 					});
 			})
 			.catch((err: Error) => {
-				reject(err.message);
+				reject(err);
 			});
 	});
 }
