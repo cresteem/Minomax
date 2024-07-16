@@ -6,12 +6,15 @@ import {
 	SelectorExtractorResponse,
 	UniqueSelectorsResponse,
 	WebDocFileListerResponse,
-} from "../options";
+} from "../../options";
 
 function _fetchfiles(
 	webDocFilesPatterns: string[],
+	noDirPatterns: string[],
 ): WebDocFileListerResponse {
-	const webDocFiles: string[] = globSync(webDocFilesPatterns);
+	const webDocFiles: string[] = globSync(webDocFilesPatterns, {
+		ignore: noDirPatterns,
+	});
 
 	const cssFiles: string[] = webDocFiles.filter(
 		(file) => extname(file) === ".css",
@@ -87,8 +90,12 @@ function _extractUniqueSelectors(
 
 export default function selectorExtractor(
 	webDocFilesPatterns: string[],
+	noDirPatterns: string[],
 ): SelectorExtractorResponse {
-	const { webDocFiles, cssContents } = _fetchfiles(webDocFilesPatterns);
+	const { webDocFiles, cssContents } = _fetchfiles(
+		webDocFilesPatterns,
+		noDirPatterns,
+	);
 
 	const cssRules: (Rule | Comment | AtRule)[] | false =
 		parse(cssContents)?.stylesheet?.rules ?? false;

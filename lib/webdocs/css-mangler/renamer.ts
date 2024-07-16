@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
-import { NewNamesMakerResponse } from "lib/options";
 import { join, relative } from "path";
+import { NewNamesMakerResponse } from "../../options";
 import selectorExtractor from "./extracter";
 
 //generate alteration names for selectors
@@ -225,10 +225,12 @@ function _renameSelectorsInCSS(
 
 function _makeNewNames(
 	webDocFilesPatterns: string[],
+	noDirPatterns: string[],
 	map: boolean = false,
 ): NewNamesMakerResponse {
 	const { uniqueIds, uniqueClassNames, webDocFiles } = selectorExtractor(
 		webDocFilesPatterns,
+		noDirPatterns,
 	);
 
 	const newClassNameRecords: Record<string, string> =
@@ -268,10 +270,12 @@ function _makeNewNames(
 export default async function renameSelectors(
 	webDocFilesPatterns: string[],
 	destinationBase: string,
+	noDirPatterns: string[],
 	batchSize: number = 5,
-): Promise<void> {
+): Promise<string[]> {
 	const { newSelectorsRecords, webDocFiles } = _makeNewNames(
 		webDocFilesPatterns,
+		noDirPatterns,
 	);
 
 	const promises: (() => Promise<void>)[] = [];
@@ -327,4 +331,10 @@ export default async function renameSelectors(
 			console.log(err);
 		}
 	}
+
+	const destinatedFiles: string[] = webDocFiles.map((file) =>
+		join(destinationBase, relative(process.cwd(), file)),
+	);
+
+	return destinatedFiles;
 }
