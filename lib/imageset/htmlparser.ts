@@ -8,11 +8,6 @@ const {
 	imageSetConfigurations: { screenSizes },
 } = configurations;
 
-/*
- *@param_1 - tag {Cheerio Elem} => img tag to process
- *@param_2 - htmlfile {String} => html file url to render and find W & H of img.
- *@param_3 - htmlTree {Cheerio API} => cheerio html tree
- */
 /* Responsible to process image tags, one at a time */
 function _processImgTag(
 	tag: Cheerio<Element>,
@@ -69,13 +64,8 @@ function _processImgTag(
 	});
 }
 
-/*
- *@param_1 - imgTags {Cheerio<Element>[]} => List of Available img tags to process
- *@param_2 - htmlfile {String} => html file url to render and find W & H of img.
- *@param_3 - htmlTree {Cheerio} => cheerio html tree
- */
 //Responsible to process image tags simultaneosly
-function processImgTags(
+async function processImgTags(
 	imgTags: Cheerio<Element>[],
 	htmlfile: string,
 	htmlTree: CheerioAPI,
@@ -89,21 +79,36 @@ function processImgTags(
 		});
 	}
 
-	return new Promise((complete, reject) => {
-		//calling all promised functions
-		Promise.all(promises.map((func) => func()))
-			.then((records: SrcRecord[]) => {
-				const imageTagsRecord: ImageTagsRecord = {
-					htmlFile: htmlfile,
-					ImageRecords: records,
-				};
+	/* Batching promises */
+	const batchSize: number = 1;
+	const promiseBatches: (() => Promise<SrcRecord>)[][] = [];
 
-				complete(imageTagsRecord);
-			})
-			.catch((error) => {
-				reject(error);
-			});
-	});
+	for (let i = 0; i < promises.length; i += batchSize) {
+		promiseBatches.push(promises.slice(i, i + batchSize));
+	}
+
+	const records: SrcRecord[] = [];
+
+	/* Activating batches */
+	for (const batch of promiseBatches) {
+		const activatedBatch: Promise<SrcRecord>[] = batch.map((func) =>
+			func(),
+		);
+
+		try {
+			const srcRecord: SrcRecord[] = await Promise.all(activatedBatch);
+			records.push(...srcRecord);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	const imageTagsRecord: ImageTagsRecord = {
+		htmlFile: htmlfile,
+		ImageRecords: records,
+	};
+
+	return imageTagsRecord;
 }
 
 function _extractImagesRecord(htmlfile: string): Promise<ImageTagsRecord> {
@@ -138,23 +143,44 @@ function _extractImagesRecord(htmlfile: string): Promise<ImageTagsRecord> {
 
 export async function htmlParser(
 	htmlFiles: string[],
+	batchSize: number,
 ): Promise<ImageTagsRecord[]> {
 	const htmlParsePromises: (() => Promise<ImageTagsRecord>)[] = [];
 
 	for (const htmlfile of htmlFiles) {
-		htmlParsePromises.push(() => {
+		htmlParsePromises.push((): Promise<ImageTagsRecord> => {
 			return _extractImagesRecord(htmlfile);
 		});
 	}
 
-	const recordTable: ImageTagsRecord[] = await Promise.all(
-		htmlParsePromises.map((func) => func()),
-	);
+	const recordTable: ImageTagsRecord[] = [];
+
+	/*  */
+	const promiseBatches: (() => Promise<ImageTagsRecord>)[][] = [];
+
+	/* Batching promises */
+	for (let i = 0; i < htmlParsePromises.length; i += batchSize) {
+		promiseBatches.push(htmlParsePromises.slice(i, i + batchSize));
+	}
+	/* Activating batches */
+	for (const batch of promiseBatches) {
+		const activatedBatch: Promise<ImageTagsRecord>[] = batch.map((func) =>
+			func(),
+		);
+
+		try {
+			const records = await Promise.all(activatedBatch);
+
+			recordTable.push(...records);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+	/*  */
 
 	/* writeFileSync(
 		process.cwd() + "/op.json",
 		JSON.stringify(recordTable, null, 2),
 	); */
-
 	return recordTable;
 }
