@@ -282,7 +282,7 @@ async function _imgTagTransformer(
 export default async function transformer(
 	htmlsRecords: ImageTagsRecord[],
 	destinationBase: string = "dist",
-	batchSize: number = 5,
+	batchSize: number = 10 /* Read and write only */,
 ): Promise<void> {
 	const transformedHtmls: ImgTagTransResponse[] = await _imgTagTransformer(
 		htmlsRecords,

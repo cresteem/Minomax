@@ -2,6 +2,7 @@ import { htmlParser } from "./htmlparser";
 
 import { existsSync } from "fs";
 import { globSync } from "glob";
+import { freemem } from "os";
 import { extname, join, relative } from "path";
 import configurations from "../../configLoader";
 import { ImageSetGenRecord, ImageTagsRecord } from "../options";
@@ -19,8 +20,10 @@ const {
 export default async function imageGenerator(
 	htmlPathPatterns: string[],
 	destinationBase: string,
-	batchSize: number = 5,
 ) {
+	const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
+	const batchSize: number = Math.round(freememInMB / 2000);
+
 	//making metadata for images that available in html
 	const htmlFiles: string[] = globSync(htmlPathPatterns);
 	const imagesMetaofHtmls: ImageTagsRecord[] = await htmlParser(
@@ -127,5 +130,6 @@ export default async function imageGenerator(
 	}
 
 	/* Transform img tags to picture tags*/
-	await transformer(imagesMetaofHtmls, destinationBase, batchSize);
+	const rwBatchSize: number = batchSize * 5;
+	await transformer(imagesMetaofHtmls, destinationBase, rwBatchSize);
 }
