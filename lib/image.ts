@@ -58,7 +58,7 @@ function _encodeImages(
 	encodeOptions: Record<string, any>,
 ): Promise<void> {
 	//number of concurrent process.
-	/* 50 percentage of core count If there is no cpu allocation in Settings */
+	/* 70 percentage of core count If there is no cpu allocation in Settings */
 	const threadCount: number =
 		cpuAllocation ?? Math.floor((70 * cpus().length) / 100);
 
@@ -200,7 +200,7 @@ async function _svgWorker(svgImagePaths: string[]): Promise<void> {
 	}
 }
 
-export async function imageWorker(
+export default async function imageWorker(
 	imagePaths: string[],
 	targetFormat: ImageWorkerOutputTypes,
 ): Promise<void> {

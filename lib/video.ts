@@ -6,6 +6,7 @@ import { currentTime, makeDirf } from "./utils";
 import ffmpegIns from "@ffmpeg-installer/ffmpeg";
 import ffprobeIns from "@ffprobe-installer/ffprobe";
 import ffmpeg from "fluent-ffmpeg";
+import configurations from "../configLoader";
 
 ffmpeg.setFfmpegPath(ffmpegIns.path);
 ffmpeg.setFfprobePath(ffprobeIns.path);
@@ -58,12 +59,12 @@ function _thumbnailGenerator(
 	});
 }
 
-export async function videoWorker(
+export default async function videoWorker(
 	videoPaths: string[],
 	codecType: "wav1" | "mav1" | "mx265" = "wav1",
 	encodeLevel: 1 | 2 | 3 = 1,
-	basepath: string = "dist",
 	thumbnailSeekPercent: number = 15, //1-100
+	basepath: string = configurations.destPath,
 ) {
 	const availmem: number = Math.floor(freemem() / 1024 / 1024);
 

@@ -37,7 +37,7 @@ function _resizeImage(
 }
 
 function _upscaler(baseImage: string): Promise<UpscalerResponse> {
-	return new Promise(async (resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		const tempOPFilePath: string = join(
 			process.cwd(),
 			".pixteroid",
@@ -70,60 +70,87 @@ function _upscaler(baseImage: string): Promise<UpscalerResponse> {
 	});
 }
 
-export default async function nonSvgGen(
+export default function nonSvgGen(
 	baseImagePath: string,
 	targetWidth: number,
 	destinationPath: string,
 ): Promise<void> {
-	/* Get base image width */
-	const baseImageWidth: number = await _getImageWidth(baseImagePath);
+	return new Promise((resolve, reject) => {
+		/* Get base image width */
+		_getImageWidth(baseImagePath)
+			.then((baseImageWidth: number) => {
+				let upscaledBaseImagePath: string = "";
+				let upscaledBaseimageWidth: number = 0;
 
-	return new Promise(async (resolve, reject) => {
-		let upscaledBaseImagePath: string = "";
-		let upscaledBaseimageWidth: number = 0;
+				if (targetWidth > baseImageWidth) {
+					_upscaler(baseImagePath)
+						.then((upscaleImageMeta: UpscalerResponse) => {
+							upscaledBaseImagePath = upscaleImageMeta.upscaledBaseimage;
+							upscaledBaseimageWidth =
+								upscaleImageMeta.upscaledBaseimageWidth;
 
-		if (targetWidth > baseImageWidth) {
-			try {
-				const upscaleImageMeta: UpscalerResponse = await _upscaler(
-					baseImagePath,
-				);
-				upscaledBaseImagePath = upscaleImageMeta.upscaledBaseimage;
-				upscaledBaseimageWidth = upscaleImageMeta.upscaledBaseimageWidth;
-			} catch (err) {
-				reject(`⚠️ Failed to generate ${baseImagePath}\n${err}`);
-			}
-		}
+							_gen(
+								destinationPath,
+								baseImagePath,
+								baseImageWidth,
+								upscaledBaseImagePath,
+								upscaledBaseimageWidth,
+								targetWidth,
+							)
+								.then(resolve)
+								.catch(reject);
+						})
+						.catch((err: Error) => {
+							reject(`⚠️ Failed to generate ${baseImagePath}\n${err}`);
+						});
+				} else {
+					_gen(
+						destinationPath,
+						baseImagePath,
+						baseImageWidth,
+						upscaledBaseImagePath,
+						upscaledBaseimageWidth,
+						targetWidth,
+					)
+						.then(resolve)
+						.catch(reject);
+				}
+			})
+			.catch(reject);
+	}); //promise ended
+}
 
-		//recursively create hierarchical output directories if not existing
-		makeDirf(dirname(destinationPath));
+function _gen(
+	destinationPath: string,
+	baseImagePath: string,
+	baseImageWidth: number,
+	upscaledBaseImagePath: string,
+	upscaledBaseimageWidth: number,
+	targetWidth: number,
+): Promise<void> {
+	//recursively create hierarchical output directories if not existing
+	makeDirf(dirname(destinationPath));
 
-		//Image Resize - block
-		const sourceImage = upscaledBaseImagePath
-			? upscaledBaseImagePath
-			: baseImagePath;
+	//Image Resize - block
+	const sourceImage = upscaledBaseImagePath
+		? upscaledBaseImagePath
+		: baseImagePath;
 
-		const sourceImageWidth = upscaledBaseImagePath
-			? upscaledBaseimageWidth
-			: baseImageWidth;
+	const sourceImageWidth = upscaledBaseImagePath
+		? upscaledBaseimageWidth
+		: baseImageWidth;
 
+	return new Promise((resolve, reject) => {
 		//check if image is already in expected size and do needed otherwise.
 		if (sourceImageWidth !== targetWidth) {
-			try {
-				await _resizeImage(sourceImage, destinationPath, targetWidth);
-				resolve();
-			} catch (err) {
-				reject(err);
-			}
+			_resizeImage(sourceImage, destinationPath, targetWidth)
+				.then(resolve)
+				.catch(reject);
 		} else {
 			//copy file if not exist
 			if (!existsSync(destinationPath)) {
-				try {
-					await copyFile(sourceImage, destinationPath);
-					resolve();
-				} catch (err) {
-					reject(err);
-				}
+				copyFile(sourceImage, destinationPath).then(resolve).catch(reject);
 			}
 		}
-	}); //promise ended
+	});
 }
