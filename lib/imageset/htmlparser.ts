@@ -143,7 +143,7 @@ function _extractImagesRecord(htmlfile: string): Promise<ImageTagsRecord> {
 
 export async function htmlParser(
 	htmlFiles: string[],
-	batchSize: number,
+	batchSize: number = 2,
 ): Promise<ImageTagsRecord[]> {
 	const htmlParsePromises: (() => Promise<ImageTagsRecord>)[] = [];
 

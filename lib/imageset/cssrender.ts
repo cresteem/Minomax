@@ -1,96 +1,103 @@
-import puppeteer from "puppeteer";
+import puppeteer, { Browser } from "puppeteer";
 
-export async function getImageSize(
+export function getImageSize(
 	selectors: { id: string; classes: string[] },
 	htmlPath: string,
 	screenSizes: Record<string, number>,
 ): Promise<Record<string, number>> {
-	return new Promise((resolve, reject) => {
-		// Browser instance
-		puppeteer
-			.launch({
+	/* let prevsec: number = new Date().getTime(); */
+
+	return new Promise(async (complete, incomplete) => {
+		let browser: Browser = {} as Browser;
+
+		try {
+			// Browser instance
+			browser = await puppeteer.launch({
 				headless: true,
 				args: ["--start-maximized"],
-			})
-			.then(async (browser) => {
-				const imageSizes: Record<string, number> = {};
+			});
 
-				const promises = [];
+			const imageSizes: Record<string, number> = {};
 
-				for (const screenKey of Object.keys(screenSizes)) {
-					promises.push((): Promise<void> => {
-						return new Promise((resolve, reject) => {
-							// Page to load
-							browser
-								.newPage()
-								.then((page) => {
-									page
-										.evaluate(() => {
-											return {
-												height: window.screen.availHeight,
-											};
-										})
-										.then((nativeScreenSize) => {
-											// Setting specific width and height for viewport
-											page
-												.setViewport({
-													width: screenSizes[screenKey],
-													height: nativeScreenSize.height,
-												})
-												.then(() => {
-													// Navigate to the htmlPath
-													page
-														.goto(htmlPath)
-														.then(() => {
-															const selector: string =
-																selectors?.id ||
-																selectors?.classes[0] ||
-																"img";
+			const promises: (() => Promise<void>)[] = Object.keys(
+				screenSizes,
+			).map((screenKey) => {
+				return (): Promise<void> => {
+					return new Promise(async (resolve, reject) => {
+						try {
+							const page = await browser.newPage();
+							const nativeScreenSize = await page.evaluate(() => ({
+								height: window.screen.availHeight,
+							}));
 
-															// Extract the size of the image
-															page
-																.evaluate((selector) => {
-																	const img: any =
-																		document.querySelector(selector);
+							await page.setViewport({
+								width: screenSizes[screenKey],
+								height: nativeScreenSize.height,
+							});
 
-																	return {
-																		width: img?.width,
-																		/* height: img?.height, */
-																	};
-																}, selector)
-																.then((imageSize) => {
-																	imageSizes[screenKey] = imageSize as any;
-																	resolve();
-																})
-																.catch(reject);
-														})
-														.catch(reject);
-												})
-												.catch(reject);
-										})
-										.catch(reject);
-								})
-								.catch(reject);
-						});
+							await page.goto(htmlPath, { timeout: 60000 });
+
+							const selector: string =
+								selectors?.id || selectors?.classes[0] || "img";
+
+							const imageSize = await page.evaluate((selector: string) => {
+								const img: any = document.querySelector(selector);
+
+								return {
+									width: img?.width,
+									// height: img?.height,
+								};
+							}, selector);
+
+							imageSizes[screenKey] = imageSize as any;
+							await page.close();
+							resolve();
+						} catch (err) {
+							reject(err);
+						}
 					});
-				}
+				};
+			});
 
-				/*  */
-				Promise.all(
-					promises.map((func) => {
-						func();
-					}),
-				)
-					.then(() => {
-						// Close the browser
-						browser.close().catch((err: Error) => {
-							console.log(err);
-						});
-						resolve(imageSizes);
-					})
-					.catch(reject);
-				/*  */
-			})
-			.catch(reject);
+			/*  */
+			/* Batching promises */
+			const batchSize: number = 1;
+			const promiseBatches: (() => Promise<void>)[][] = [];
+
+			for (let i = 0; i < promises.length; i += batchSize) {
+				promiseBatches.push(promises.slice(i, i + batchSize));
+			}
+
+			/* Activating batches */
+			for (const batch of promiseBatches) {
+				const activatedBatch: Promise<void>[] = batch.map((func) =>
+					func(),
+				);
+
+				try {
+					await Promise.all(activatedBatch);
+				} catch (err) {
+					console.log(err);
+				}
+			}
+
+			/* const ctime = new Date().getTime();
+			console.log(Math.floor(ctime - prevsec));
+			prevsec = ctime; */
+
+			complete(imageSizes);
+		} catch (err) {
+			incomplete(err);
+		} finally {
+			if (browser) {
+				try {
+					// Adding a slight delay before closing the browser
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+					await browser.close();
+				} catch (err) {
+					console.error("Error closing browser:", err);
+				}
+			}
+		}
 	});
 }
