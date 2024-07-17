@@ -1,7 +1,8 @@
 import { writeFileSync } from "fs";
-import { readFile, writeFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { join, relative } from "path";
 import { NewNamesMakerResponse } from "../../options";
+import { allocateBatchSize, writeContent } from "../../utils";
 import selectorExtractor from "./extracter";
 
 //generate alteration names for selectors
@@ -271,7 +272,6 @@ export default async function renameSelectors(
 	webDocFilesPatterns: string[],
 	destinationBase: string,
 	noDirPatterns: string[],
-	batchSize: number = 5,
 ): Promise<string[]> {
 	const { newSelectorsRecords, webDocFiles } = _makeNewNames(
 		webDocFilesPatterns,
@@ -307,7 +307,7 @@ export default async function renameSelectors(
 							relative(process.cwd(), file),
 						);
 
-						writeFile(destinationFilePath, content)
+						writeContent(content, destinationFilePath)
 							.then(resolve)
 							.catch(reject);
 					})
@@ -315,6 +315,8 @@ export default async function renameSelectors(
 			});
 		});
 	});
+
+	const batchSize: number = allocateBatchSize(400);
 
 	const promiseBatches = [];
 

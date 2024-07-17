@@ -6,6 +6,7 @@ import { freemem } from "os";
 import { extname, join, relative } from "path";
 import configurations from "../../configLoader";
 import { ImageSetGenRecord, ImageTagsRecord } from "../options";
+import { currentTime } from "../utils";
 import nonSvgGen from "./generators/nonsvg";
 import svgGen from "./generators/svg";
 import transformer, { imgSetPathMaker } from "./transformer";
@@ -24,8 +25,13 @@ export default async function imageGenerator(
 	const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
 	const batchSize: number = Math.round(freememInMB / 2000);
 
-	//making metadata for images that available in html
 	const htmlFiles: string[] = globSync(htmlPathPatterns);
+
+	console.log(`\n[${currentTime()}] +++> Imageset generation started.`);
+	console.log(`Number of htmlfile in queue: ${htmlFiles.length}`);
+	console.log(`Number of htmlfile at a time: ${batchSize}`);
+
+	//making metadata for images that available in html
 	const imagesMetaofHtmls: ImageTagsRecord[] = await htmlParser(
 		htmlFiles,
 		batchSize,
@@ -113,10 +119,11 @@ export default async function imageGenerator(
 	}
 
 	/* Batching promises */
+	const genBatchSize: number = batchSize * 4;
 	const promiseBatches: (() => Promise<void>)[][] = [];
 
-	for (let i = 0; i < promises.length; i += batchSize) {
-		promiseBatches.push(promises.slice(i, i + batchSize));
+	for (let i = 0; i < promises.length; i += genBatchSize) {
+		promiseBatches.push(promises.slice(i, i + genBatchSize));
 	}
 
 	/* Activating batches */
@@ -129,7 +136,14 @@ export default async function imageGenerator(
 		}
 	}
 
+	console.log(`[${currentTime()}] ===> Imageset generation completed.`);
+
+	console.log(
+		`\n[${currentTime()}] +++> Img tags transformation started.`,
+	);
 	/* Transform img tags to picture tags*/
 	const rwBatchSize: number = batchSize * 5;
 	await transformer(imagesMetaofHtmls, destinationBase, rwBatchSize);
+
+	console.log(`[${currentTime()}] ===> Transformation completed.`);
 }

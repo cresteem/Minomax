@@ -5,40 +5,76 @@ import { minify as HTMLminify } from "html-minifier";
 import { extname } from "path";
 import postcss from "postcss";
 import configurations from "../../configLoader";
+import { allocateBatchSize, currentTime } from "../utils";
 import renameSelectors from "./css-mangler/renamer";
+
+function minifyHtml(content: string): Promise<string> {
+	const {
+		webdoc: { htmloptions },
+	} = configurations;
+
+	return new Promise((resolve, reject) => {
+		let minifiedContent: string;
+
+		try {
+			minifiedContent = HTMLminify(content, htmloptions);
+		} catch (err) {
+			reject(err);
+		}
+
+		setTimeout(() => {
+			resolve(minifiedContent);
+		}, 1);
+	});
+}
+
+async function minifyJS(content: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		import("terser")
+			.then(({ minify }) => {
+				minify(content)
+					.then((result) => {
+						resolve(result?.code ?? "");
+					})
+					.catch(reject);
+			})
+			.catch(reject);
+	});
+}
+
+function minifyCss(content: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const postcssplugin: any[] = [cssnano({ preset: nanocss_adv })];
+
+		postcss(postcssplugin)
+			.process(content, { from: undefined })
+			.then((result) => {
+				resolve(result?.css ?? "");
+			})
+			.catch(reject);
+	});
+}
 
 async function _minifier(
 	mangledFiles: string[],
 	fileType: "css" | "html" | "js",
 	batchSize: number,
 ): Promise<void> {
-	let minifyFunction;
-
-	if (fileType === "html") {
-		const {
-			webdoc: { htmloptions },
-		} = configurations;
-
-		minifyFunction = (content: string): Promise<string> => {
-			return new Promise((resolve) => {
-				const minifiedContent: string = HTMLminify(content, htmloptions);
-
-				setTimeout(() => {
-					resolve(minifiedContent);
-				}, 1);
-			});
-		};
-	} else if (fileType === "js") {
-		const { minify } = await import("terser");
-
-		minifyFunction = minify;
-	} else {
-		const postcssplugin: any[] = [cssnano({ preset: nanocss_adv })];
-
-		minifyFunction = postcss(postcssplugin).process;
-	}
-
 	const promises: (() => Promise<void>)[] = [];
+
+	let minifyFunction: Function;
+
+	switch (fileType) {
+		case "css":
+			minifyFunction = minifyCss;
+			break;
+		case "html":
+			minifyFunction = minifyHtml;
+			break;
+		case "js":
+			minifyFunction = minifyJS;
+			break;
+	}
 
 	mangledFiles.forEach((mangledFile: string) => {
 		promises.push((): Promise<void> => {
@@ -47,19 +83,10 @@ async function _minifier(
 					.then((content: string) => {
 						minifyFunction(content)
 							.then((result: any) => {
-								const resultContent: string =
-									fileType === "html"
-										? result ?? ""
-										: fileType === "js"
-										? result?.code ?? ""
-										: result?.css ?? "";
-
-								writeFile(mangledFile, resultContent, {
+								writeFile(mangledFile, result, {
 									encoding: "utf8",
 								})
-									.then(() => {
-										resolve();
-									})
+									.then(resolve)
 									.catch(reject);
 							})
 							.catch(reject);
@@ -88,20 +115,25 @@ async function _minifier(
 
 export default async function webDocWorker(
 	webDocFilesPatterns: string[],
-	noDirPatterns: string[],
 	destinationBase: string,
-	batchSize: number,
+	noDirPatterns: string[] = [],
 ): Promise<void> {
-	if (!noDirPatterns) {
+	if (noDirPatterns.length === 0) {
 		noDirPatterns = ["./node_modules/**", destinationBase + "/**"];
 	}
 
+	const batchSize: number = allocateBatchSize(400);
 	const mangledFiles: Awaited<string[]> = await renameSelectors(
 		webDocFilesPatterns,
 		destinationBase,
 		noDirPatterns,
-		batchSize,
 	);
+
+	console.log(
+		`\n[${currentTime()}] +++> Web docs minification process started.`,
+	);
+	console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
+	console.log(`Number of Web docs at a time: ${batchSize}`);
 
 	const mangledHTMLFiles: string[] = [...mangledFiles].filter(
 		(file) => extname(file) === ".html",
@@ -117,4 +149,6 @@ export default async function webDocWorker(
 		(file) => extname(file) === ".js",
 	);
 	await _minifier(mangledJSFiles, "js", batchSize);
+
+	console.log(`\n[${currentTime()}] +++> Web docs were minified.`);
 }

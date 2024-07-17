@@ -1,5 +1,5 @@
 import { AtRule, Comment, parse, Rule } from "css";
-import { readFileSync } from "fs";
+import { readFileSync, statSync } from "fs";
 import { globSync } from "glob";
 import { extname } from "path";
 import {
@@ -14,7 +14,7 @@ function _fetchfiles(
 ): WebDocFileListerResponse {
 	const webDocFiles: string[] = globSync(webDocFilesPatterns, {
 		ignore: noDirPatterns,
-	});
+	}).filter((path) => statSync(path).isFile());
 
 	const cssFiles: string[] = webDocFiles.filter(
 		(file) => extname(file) === ".css",

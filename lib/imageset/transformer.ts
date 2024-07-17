@@ -1,5 +1,5 @@
 import { CheerioAPI, Element, load } from "cheerio";
-import { readFile, writeFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import {
 	ImageTagsRecord,
 	ImgTagTransResponse,
@@ -8,7 +8,7 @@ import {
 } from "lib/options";
 import { basename, dirname, extname, join, relative, resolve } from "path";
 import configurations from "../../configLoader";
-import { makeDirf } from "../utils";
+import { writeContent } from "../utils";
 const {
 	imageSetConfigurations: { screenSizes },
 } = configurations;
@@ -160,23 +160,6 @@ function _pictureTagMaker(
 	return pictureTags;
 }
 
-function _writeHTMLFile(
-	htmlString: string,
-	destinationPath: string,
-): Promise<void> {
-	return new Promise((resolve, reject) => {
-		makeDirf(dirname(destinationPath));
-
-		writeFile(destinationPath, htmlString, { encoding: "utf8" })
-			.then(() => {
-				resolve();
-			})
-			.catch((err) => {
-				reject(err);
-			});
-	});
-}
-
 function _videoThumbnailLinker(
 	htmlFilePath: string,
 	htmlContent: string,
@@ -304,7 +287,7 @@ export default async function transformer(
 
 		promises.push((): Promise<void> => {
 			return new Promise((resolve, reject) => {
-				_writeHTMLFile(result, newDestination)
+				writeContent(result, newDestination)
 					.then(() => {
 						resolve();
 					})
