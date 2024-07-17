@@ -112,18 +112,6 @@
 			]
 		}
 	},
-	"imageSetConfigurations": {
-		"screenSizes": {
-			"1X": 600,
-			"2X": 1080,
-			"3X": 1920,
-			"4X": 2560,
-			"5X": 3840
-		},
-		"upscaleLevel": "L1",
-		"fileSuffix": "_temp4setGen"
-	},
-	"destPath": "./dt",
 	"webdoc": {
 		"htmloptions": {
 			"removeComments": true,
@@ -138,5 +126,16 @@
 			"removeStyleLinkTypeAttributes": true,
 			"removeTagWhitespace": true
 		}
-	}
+	},
+	"imageSetConfigurations": {
+		"screenSizes": {
+			"1X": 600,
+			"2X": 1080,
+			"3X": 1920,
+			"4X": 2560,
+			"5X": 3840
+		},
+		"upscaleLevel": "level2"
+	},
+	"destPath": "./dt"
 }

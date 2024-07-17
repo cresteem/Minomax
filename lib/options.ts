@@ -134,8 +134,7 @@ interface imageSetConfigurations {
 	  Size always a upperlimit for each set (Example: x1:600) where 600px is upper limit
 	  */
 	screenSizes: Partial<Record<screenSizesOptions, number>>; //Screen sizes upper-limits
-	upscaleLevel: "l1" | "l2" | "l3";
-	fileSuffix: string;
+	upscaleLevel: "level1" | "level2" | "level3";
 }
 
 interface encodeOptions {

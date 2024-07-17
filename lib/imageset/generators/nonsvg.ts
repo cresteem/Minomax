@@ -3,6 +3,7 @@ import { copyFile } from "fs/promises";
 import { dirname, join, relative } from "path";
 import { upscale } from "pixteroid";
 import sharp from "sharp";
+import configurations from "../../../configLoader";
 import { UpscalerResponse } from "../../options";
 import { makeDirf } from "../../utils";
 
@@ -45,7 +46,11 @@ function _upscaler(baseImage: string): Promise<UpscalerResponse> {
 		);
 
 		if (!existsSync(tempOPFilePath)) {
-			upscale(baseImage, tempOPFilePath, "level2")
+			upscale(
+				baseImage,
+				tempOPFilePath,
+				configurations.imageSetConfigurations.upscaleLevel,
+			)
 				.then(() => {
 					_getImageWidth(tempOPFilePath)
 						.then((width) => {
