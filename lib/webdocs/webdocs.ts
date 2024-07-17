@@ -115,7 +115,8 @@ async function _minifier(
 
 export default async function webDocWorker(
 	webDocFilesPatterns: string[],
-	destinationBase: string,
+	destinationBase: string = configurations.destPath,
+	fileSearchBasePath: string,
 	noDirPatterns: string[] = [],
 ): Promise<void> {
 	if (noDirPatterns.length === 0) {
@@ -123,15 +124,18 @@ export default async function webDocWorker(
 	}
 
 	const batchSize: number = allocateBatchSize(400);
-	const mangledFiles: Awaited<string[]> = await renameSelectors(
-		webDocFilesPatterns,
-		destinationBase,
-		noDirPatterns,
-	);
 
 	console.log(
 		`\n[${currentTime()}] +++> Web docs minification process started.`,
 	);
+
+	const mangledFiles: Awaited<string[]> = await renameSelectors(
+		webDocFilesPatterns,
+		destinationBase,
+		noDirPatterns,
+		fileSearchBasePath,
+	);
+
 	console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
 	console.log(`Number of Web docs at a time: ${batchSize}`);
 

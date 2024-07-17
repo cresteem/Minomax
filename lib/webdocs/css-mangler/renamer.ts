@@ -227,11 +227,13 @@ function _renameSelectorsInCSS(
 function _makeNewNames(
 	webDocFilesPatterns: string[],
 	noDirPatterns: string[],
+	fileSearchBasePath: string,
 	map: boolean = false,
 ): NewNamesMakerResponse {
 	const { uniqueIds, uniqueClassNames, webDocFiles } = selectorExtractor(
 		webDocFilesPatterns,
 		noDirPatterns,
+		fileSearchBasePath,
 	);
 
 	const newClassNameRecords: Record<string, string> =
@@ -272,10 +274,12 @@ export default async function renameSelectors(
 	webDocFilesPatterns: string[],
 	destinationBase: string,
 	noDirPatterns: string[],
+	fileSearchBasePath: string,
 ): Promise<string[]> {
 	const { newSelectorsRecords, webDocFiles } = _makeNewNames(
 		webDocFilesPatterns,
 		noDirPatterns,
+		fileSearchBasePath,
 	);
 
 	const promises: (() => Promise<void>)[] = [];

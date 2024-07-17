@@ -24,12 +24,13 @@ const {
 function _writeBinaryImage(
 	encodeResult: Record<string, any>,
 	filePath: string,
+	destinationBasePath: string,
 ): Promise<void> {
 	const fileType: string = Object.keys(encodeResult.encodedWith)[0];
 	const extension: string = encodeResult.encodedWith[fileType].extension;
 
 	const outputPath: string = join(
-		configurations.destPath,
+		destinationBasePath,
 		dirname(relative(process.cwd(), filePath)),
 		`${basename(filePath, extname(filePath))}.${extension}`,
 	);
@@ -56,6 +57,7 @@ function _writeBinaryImage(
 function _encodeImages(
 	images: string[],
 	encodeOptions: Record<string, any>,
+	destinationBasePath: string,
 ): Promise<void> {
 	//number of concurrent process.
 	/* 70 percentage of core count If there is no cpu allocation in Settings */
@@ -84,7 +86,7 @@ function _encodeImages(
 				encodeResult
 					.encode(encodeOptions)
 					.then(() => {
-						_writeBinaryImage(encodeResult, filePath)
+						_writeBinaryImage(encodeResult, filePath, destinationBasePath)
 							.then(() => {
 								resolve();
 							})
@@ -136,7 +138,10 @@ async function _svgBatchHandler(
 	}
 }
 
-async function _svgWorker(svgImagePaths: string[]): Promise<void> {
+async function _svgWorker(
+	svgImagePaths: string[],
+	destinationBasePath: string,
+): Promise<void> {
 	const outputPromises: (() => Promise<void>)[] = svgImagePaths.map(
 		(svgPath: string) => {
 			return (): Promise<void> => {
@@ -162,7 +167,7 @@ async function _svgWorker(svgImagePaths: string[]): Promise<void> {
 
 							if (!failed) {
 								const outputPath: string = join(
-									configurations.destPath,
+									destinationBasePath,
 									relative(process.cwd(), svgPath),
 								);
 
@@ -203,6 +208,7 @@ async function _svgWorker(svgImagePaths: string[]): Promise<void> {
 export default async function imageWorker(
 	imagePaths: string[],
 	targetFormat: ImageWorkerOutputTypes,
+	destinationBasePath: string = configurations.destPath,
 ): Promise<void> {
 	process.on("SIGINT", () => {
 		process.exit();
@@ -213,7 +219,7 @@ export default async function imageWorker(
 	console.log(`[${currentTime()}] +++> Image Encoding Started`);
 
 	if (targetFormat === "svg") {
-		await _svgWorker(imagePaths);
+		await _svgWorker(imagePaths, destinationBasePath);
 		console.log(
 			`[${currentTime()}] ===> Images are optimised with SVG format.`,
 		);
@@ -238,7 +244,7 @@ export default async function imageWorker(
 		}
 
 		//encoding for jpg/avif/webp
-		await _encodeImages(imagePaths, encodeOptions);
+		await _encodeImages(imagePaths, encodeOptions, destinationBasePath);
 
 		console.log(
 			`[${currentTime()}] ===> Images are optimised with ${targetFormat.toUpperCase()} format.`,

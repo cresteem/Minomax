@@ -252,3 +252,12 @@ export interface NewNamesMakerResponse {
 	newSelectorsRecords: Record<string, string>;
 	webDocFiles: string[];
 }
+
+export interface ImageWorkerParamsMain {
+	targetFormat: ImageWorkerOutputTypes;
+}
+
+export interface VideoWorkerParamsMain {
+	codecType: "wav1" | "mav1" | "mx265";
+	encodeLevel?: 1 | 2 | 3;
+}

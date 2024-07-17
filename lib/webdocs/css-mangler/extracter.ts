@@ -11,9 +11,12 @@ import {
 function _fetchfiles(
 	webDocFilesPatterns: string[],
 	noDirPatterns: string[],
+	fileSearchBasePath: string,
 ): WebDocFileListerResponse {
 	const webDocFiles: string[] = globSync(webDocFilesPatterns, {
 		ignore: noDirPatterns,
+		cwd: fileSearchBasePath,
+		absolute: true,
 	}).filter((path) => statSync(path).isFile());
 
 	const cssFiles: string[] = webDocFiles.filter(
@@ -91,10 +94,12 @@ function _extractUniqueSelectors(
 export default function selectorExtractor(
 	webDocFilesPatterns: string[],
 	noDirPatterns: string[],
+	fileSearchBasePath: string,
 ): SelectorExtractorResponse {
 	const { webDocFiles, cssContents } = _fetchfiles(
 		webDocFilesPatterns,
 		noDirPatterns,
+		fileSearchBasePath,
 	);
 
 	const cssRules: (Rule | Comment | AtRule)[] | false =

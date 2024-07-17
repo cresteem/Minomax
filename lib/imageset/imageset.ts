@@ -20,12 +20,16 @@ const {
  */
 export default async function imageGenerator(
 	htmlPathPatterns: string[],
-	destinationBase: string,
+	destinationBase: string = configurations.destPath,
+	ignorePatterns: string[],
 ) {
 	const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
 	const batchSize: number = Math.round(freememInMB / 2000);
 
-	const htmlFiles: string[] = globSync(htmlPathPatterns);
+	const htmlFiles: string[] = globSync(htmlPathPatterns, {
+		ignore: ignorePatterns,
+		absolute: true,
+	});
 
 	console.log(`\n[${currentTime()}] +++> Imageset generation started.`);
 	console.log(`Number of htmlfile in queue: ${htmlFiles.length}`);
@@ -103,7 +107,6 @@ export default async function imageGenerator(
 				console.log(
 					"Avif image source is not supported to make image sets",
 				);
-				continue;
 			} else {
 				/* Non SVG promises */
 				for (const meta of Object.values(record.imageSet)) {
@@ -114,7 +117,6 @@ export default async function imageGenerator(
 			}
 		} else {
 			console.log(`${baseImagePath} not existing so skipping it`);
-			continue;
 		}
 	}
 
