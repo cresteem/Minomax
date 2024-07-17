@@ -15,10 +15,12 @@ export default async function minomax(
 	imageWorkerParams: ImageWorkerParamsMain,
 	videoWorkerParams: VideoWorkerParamsMain,
 	destinationBasePath: string = configurations.destPath,
+	ignorePatterns: string[] = [],
 	webDocFilesPatterns: string[] | false = false,
 	removeOld: boolean = true,
 ) {
-	const ignorePatterns: string[] = [
+	ignorePatterns = [
+		...ignorePatterns,
 		"node_modules/**",
 		`${destinationBasePath}/**`,
 	];

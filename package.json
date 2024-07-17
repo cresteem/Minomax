@@ -12,17 +12,13 @@
 	"files": [
 		"dist"
 	],
-	"directories": {
-		"lib": "./dist/lib"
-	},
-	"engines": {
-		"node": "*"
-	},
 	"preferGlobal": true,
 	"bin": {
-		"minomax": "./dist/bin/cli.js"
+		"mm": "./dist/bin/cli.js"
 	},
-	"repository": "https://github.com/cresteem/minomax",
+	"repository": {
+		"url": "https://github.com/cresteem/minomax"
+	},
 	"bugs": {
 		"url": "https://github.com/cresteem/minomax/issues"
 	},
@@ -35,12 +31,11 @@
 	"license": "Apache-2.0",
 	"private": false,
 	"scripts": {
-		"dev": "rimraf dist && tsc -p tscdev.json && ncp ./minomax.config.json ./dist/minomax.config.json",
-		"dr": "cls && yarn dev && yarn rp",
+		"dev": "cls && rimraf dist && tsc -p tscdev.json && ncp ./minomax.config.json ./dist/minomax.config.json",
+		"dr": "yarn dev && yarn rp",
 		"rp": "node ./dist/minomax.js",
 		"test": "jest --runInBand",
 		"build": "cls && rimraf dist && tsc -p tsconfig.json && ncp ./minomax.config.json ./dist/minomax.config.json",
-		"watch": "tsc --watch",
 		"clean": "cls && rimraf dist",
 		"deploy": "yarn test && yarn build && yarn publish --access public && git push"
 	},
