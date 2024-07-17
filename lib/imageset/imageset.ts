@@ -23,7 +23,10 @@ export default async function imageGenerator(
 ) {
 	//making metadata for images that available in html
 	const htmlFiles: string[] = globSync(htmlPathPatterns);
-	const imagesMetaofHtmls: ImageTagsRecord[] = await htmlParser(htmlFiles);
+	const imagesMetaofHtmls: ImageTagsRecord[] = await htmlParser(
+		htmlFiles,
+		batchSize,
+	);
 
 	/* path of each images */
 	const imageSetPaths: Record<
