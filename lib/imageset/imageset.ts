@@ -141,7 +141,7 @@ export default async function imageGenerator(
 	console.log(`[${currentTime()}] ===> Imageset generation completed.`);
 
 	console.log(
-		`\n[${currentTime()}] +++> Img tags transformation started.`,
+		`\n[${currentTime()}] +++> Img tags transformation & Video thumbnail linking started.`,
 	);
 	/* Transform img tags to picture tags*/
 	const rwBatchSize: number = batchSize * 5;

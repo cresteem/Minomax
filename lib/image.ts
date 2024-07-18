@@ -1,5 +1,5 @@
 import { appendFileSync, readFileSync } from "fs";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, rm, writeFile } from "fs/promises";
 import { cpus } from "os";
 import { basename, dirname, extname, join, relative } from "path";
 import { ImagePool } from "remige";
@@ -46,6 +46,18 @@ function _writeBinaryImage(
 			encoding: "binary",
 		})
 			.then(() => {
+				/* remove stale */
+				/* check if the stale and op file in same directory */
+				if (
+					relative(process.cwd(), dirname(filePath)) ===
+					relative(process.cwd(), dirname(outputPath))
+				) {
+					/* Remove Stale if extension is changing */
+					if (extname(filePath) !== extname(outputPath)) {
+						rm(filePath).then(resolve).catch(console.warn);
+					}
+				}
+
 				resolve();
 			})
 			.catch((error: Error) => {

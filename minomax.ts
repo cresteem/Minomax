@@ -11,7 +11,7 @@ import { copyFiles } from "./lib/utils";
 import videoWorker from "./lib/video";
 import webDocWorker from "./lib/webdocs/webdocs";
 
-export default async function minomax(
+export async function minomax(
 	imageWorkerParams: ImageWorkerParamsMain,
 	videoWorkerParams: VideoWorkerParamsMain,
 	destinationBasePath: string = configurations.destPath,
