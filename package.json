@@ -1,7 +1,7 @@
 {
 	"name": "@cresteem/minomax",
 	"displayName": "Minomax",
-	"version": "0.0.1a",
+	"version": "1.0.0",
 	"description": "Minomax is a powerful Node.js package designed to efficiently compress a wide range of web resources, including videos, images, HTML, CSS, JavaScript, and SVG files. Enhance your website's performance and reduce load times with Minomax's robust compression capabilities.",
 	"main": "./dist/minomax.js",
 	"types": "./dist/types/minomax.d.ts",
@@ -15,7 +15,7 @@
 	],
 	"preferGlobal": true,
 	"bin": {
-		"mm": "./dist/bin/cli.js"
+		"minomax": "./dist/bin/cli.js"
 	},
 	"repository": {
 		"url": "https://github.com/cresteem/minomax"
@@ -68,6 +68,7 @@
 		"@ffmpeg-installer/ffmpeg": "latest",
 		"@ffprobe-installer/ffprobe": "latest",
 		"cheerio": "1.0.0-rc.12",
+		"commander": "12.1.0",
 		"css": "3.0.0",
 		"cssnano": "^7.0.4",
 		"cssnano-preset-advanced": "^7.0.4",
@@ -81,8 +82,7 @@
 		"remige": "^0.1.1",
 		"sharp": "^0.33.4",
 		"svgo": "3.3.2",
-		"terser": "^5.31.2",
-		"yargs": "17.7.2"
+		"terser": "^5.31.2"
 	},
 	"devDependencies": {
 		"@babel/core": "7.24.8",

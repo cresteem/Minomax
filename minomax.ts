@@ -4,6 +4,7 @@ import configurations from "./configLoader";
 import imageWorker from "./lib/image";
 import imageGenerator from "./lib/imageset/imageset";
 import {
+	ImageWorkerOutputTypes,
 	ImageWorkerParamsMain,
 	VideoWorkerParamsMain,
 } from "./lib/options";
@@ -128,4 +129,110 @@ export async function minomax(
 		ignorePatterns,
 	);
 	/* ------- */
+}
+
+export async function compressImages(
+	pathPatterns: string[],
+	targetFormat: ImageWorkerOutputTypes,
+	destinationBasePath: string = configurations.destPath,
+	ignorePatterns: string[] = [],
+) {
+	ignorePatterns = [
+		...ignorePatterns,
+		"node_modules/**",
+		`${destinationBasePath}/**`,
+	];
+
+	const imagesFiles: string[] = globSync(pathPatterns, {
+		ignore: ignorePatterns,
+		absolute: true,
+	});
+
+	try {
+		await imageWorker(imagesFiles, targetFormat, destinationBasePath);
+	} catch (err) {
+		console.log(err);
+		process.exit(1);
+	}
+}
+
+export async function compressVideos(
+	pathPatterns: string[],
+	codecType: "wav1" | "mav1" | "mx265",
+	encodeLevel: 1 | 2 | 3 = 3,
+	destinationBasePath: string = configurations.destPath,
+	ignorePatterns: string[] = [],
+) {
+	ignorePatterns = [
+		...ignorePatterns,
+		"node_modules/**",
+		`${destinationBasePath}/**`,
+	];
+
+	const videoFiles: string[] = globSync(pathPatterns, {
+		ignore: ignorePatterns,
+		absolute: true,
+	});
+
+	try {
+		const thumbnailSeekPercent: number = 20;
+		await videoWorker(
+			videoFiles,
+			codecType,
+			encodeLevel,
+			thumbnailSeekPercent,
+			destinationBasePath,
+		);
+	} catch (err) {
+		console.log(err);
+		process.exit(1);
+	}
+}
+
+export async function minifyWebdoc(
+	pathPatterns: string[],
+	destinationBasePath: string = configurations.destPath,
+	fileSearchBasePath: string = process.cwd(),
+	ignorePatterns: string[] = [],
+) {
+	ignorePatterns = [
+		...ignorePatterns,
+		"node_modules/**",
+		`${destinationBasePath}/**`,
+	];
+
+	try {
+		await webDocWorker(
+			pathPatterns,
+			destinationBasePath,
+			fileSearchBasePath,
+			ignorePatterns,
+		);
+	} catch (err) {
+		console.log(err);
+		process.exit(1);
+	}
+}
+
+export async function generateImageSets(
+	pathPatterns: string[],
+	destinationBasePath: string = configurations.destPath,
+	ignorePatterns: string[] = [],
+) {
+	ignorePatterns = [
+		...ignorePatterns,
+		"node_modules/**",
+		`${destinationBasePath}/**`,
+	];
+
+	try {
+		await imageGenerator(
+			pathPatterns,
+			destinationBasePath,
+			ignorePatterns,
+		);
+	} catch (err) {
+		console.log(err);
+		process.exit(1);
+	}
 }
