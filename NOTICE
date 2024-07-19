@@ -10,6 +10,7 @@ Minomax is a powerful Node.js package designed to efficiently compress a wide ra
 - **CSS Minification**: Minimize your CSS files to improve site speed and performance.
 - **JavaScript Minification**: Shrink your JS files to accelerate page rendering.
 - **SVG Compression**: Compress SVG files while maintaining their visual integrity.
+- **Generate Dynamic imageSets**: Collections of images that adapt to various screen sizes, resolutions, or device types to reduce network overhead.
 
 ### Benefits:
 
@@ -17,6 +18,33 @@ Minomax is a powerful Node.js package designed to efficiently compress a wide ra
 - Decrease load times
 - Reduce bandwidth usage
 - Improve SEO rankings
+
+## Compression Results
+
+### Image Compression
+
+- **Original Size**: 43.9 MB
+- **Compressed Size**: 1.44 MB
+- **Compression Ratio**: 96.72%
+
+![Image Compression](https://github.com/cresteem/Minomax-Demo/blob/main/reports/image_compression.png?raw=true)
+
+### Video Compression
+
+- **Original Size**: 15.2 MB
+- **Compressed Size**: 1.04 MB
+- **Compression Ratio**: 93.16%
+
+![Video Compression](https://github.com/cresteem/Minomax-Demo/blob/main/reports/video_compression.png?raw=true)
+
+### Web Document Compression
+
+- **Original Size**: 175 KB
+- **Compressed Size**: 131 KB
+- **Compression Ratio**: 25.14%
+
+![Web Document Compression](https://github.com/cresteem/Minomax-Demo/blob/main/reports/webdoc_compression.png?raw=true)
+
 
 ### Installation:
 
@@ -31,9 +59,6 @@ npm install --dev @cresteem/minomax
 ```bash
 yarn add -D @cresteem/minomax
 ```
-
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cresteem/Minomax-JS/test.yaml?branch=main&style=flat&logo=github&logoColor=black&logoSize=auto&label=Test&labelColor=white&color=rgb(80%2C200%2C10))
-
 
 Available on NPM:
 
@@ -65,4 +90,4 @@ In addition to the terms of the Apache License, Version 2.0, you are required to
 This attribution must be displayed in a prominent location in any documentation, notices, or marketing materials accompanying the distribution or use of this software.
 
 ## 🌐 Documenation Website
-https://www.cresteem.com/opensource/minomax
+https://minomax.cresteem.com/
