@@ -1,34 +1,28 @@
 <div align="center">
 
-# [Title] - [short desc]
+# Minomax - Elevate Your Web Performance with Advanced Optimization
 
-<p id="intro">[This is a placeholder paragraph. Here some introductory text or describe the content that will eventually go in this section. This text is meant to give a sense of how the final content will look in the design.]
-</p>
+<p id="intro">Minomax is a versatile and powerful optimization tool designed to elevate the performance of your web projects. Whether you're a developer focused on improving load times or a business committed to delivering a seamless user experience, Minomax provides the comprehensive solution you need. By compressing images, videos, and web documents, and generating optimized content tailored for various devices, Minomax ensures your website runs faster, saves bandwidth, and delivers an exceptional experience across all platforms.</p>
 
 ### Supported Platforms
 
-[![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)]()
 [![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)]()
 [![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]()
 [![Node JS](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)]()
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
-[![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)]()
 
 ---
-
-[uname-holder/reponame-holder] [npm-name-holder] [wf-holder] - for test&build
 
 <p>
 
 <span>
-  <a href="https://github.com/uname-holder/reponame-holder/commits/main">
-    <img src="https://img.shields.io/github/last-commit/uname-holder/reponame-holder?display_timestamp=committer&style=for-the-badge&label=Updated%20On" alt="GitHub last commit"/>
+  <a href="https://github.com/cresteem/Minomax/commits/main">
+    <img src="https://img.shields.io/github/last-commit/cresteem/Minomax?display_timestamp=committer&style=for-the-badge&label=Updated%20On" alt="GitHub last commit"/>
   </a>
 </span>
 
 <span>
   <a href="">
-    <img src="https://img.shields.io/github/commit-activity/m/uname-holder/reponame-holder?style=for-the-badge&label=Commit%20Activity" alt="GitHub commit activity"/>
+    <img src="https://img.shields.io/github/commit-activity/m/cresteem/Minomax?style=for-the-badge&label=Commit%20Activity" alt="GitHub commit activity"/>
   </a>
 </span>
 
@@ -37,14 +31,8 @@
 <p>
 
 <span>
-  <a href="https://github.com/uname-holder/reponame-holder/actions/workflows/wf-holder.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/uname-holder/reponame-holder/wf-holder.yml?style=for-the-badge&label=Build%20Status" alt="GitHub Actions Build Status"/>
-  </a>
-</span>
-
-<span>
-  <a href="https://github.com/uname-holder/reponame-holder/actions/workflows/wf-holder.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/uname-holder/reponame-holder/wf-holder.yml?style=for-the-badge&label=Test%20Status" alt="GitHub Actions Test Status"/>
+  <a href="https://github.com/cresteem/Minomax/actions/workflows/test.yaml">
+    <img src="https://img.shields.io/github/actions/workflow/status/cresteem/Minomax/test.yaml?style=for-the-badge&label=Test%20Status" alt="GitHub Actions Test Status"/>
   </a>
 </span>
 
@@ -56,13 +44,13 @@
 
 <span>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/uname-holder/reponame-holder?style=for-the-badge&label=License" alt="GitHub License"/>
+    <img src="https://img.shields.io/github/license/cresteem/Minomax?style=for-the-badge&label=License" alt="GitHub License"/>
   </a>
 </span>
 
 <span>
-  <a href="https://github.com/uname-holder/reponame-holder/releases">
-    <img src="https://img.shields.io/github/v/release/uname-holder/reponame-holder?include_prereleases&sort=date&display_name=tag&style=for-the-badge&label=Latest%20Version" alt="GitHub Release"/>
+  <a href="https://github.com/cresteem/Minomax/releases">
+    <img src="https://img.shields.io/github/v/release/cresteem/Minomax?sort=date&display_name=tag&style=for-the-badge&label=Latest%20Version" alt="GitHub Release"/>
   </a>
 </span>
 
@@ -71,8 +59,8 @@
 <p>
 
 <span>
-  <a href="https://www.codefactor.io/repository/github/uname-holder/reponame-holder/issues/main">
-    <img src="https://img.shields.io/codefactor/grade/github/uname-holder/reponame-holder?style=for-the-badge&label=Code%20Quality%20Grade" alt="CodeFactor Grade"/>
+  <a href="https://www.codefactor.io/repository/github/cresteem/Minomax/issues/main">
+    <img src="https://img.shields.io/codefactor/grade/github/cresteem/Minomax?style=for-the-badge&label=Code%20Quality%20Grade" alt="CodeFactor Grade"/>
   </a>
 </span>
 
@@ -84,13 +72,13 @@
 
 <span>
   <a href="">
-    <img src="https://img.shields.io/npm/d18m/npm-name-holder?style=for-the-badge&label=Downloads%20On%20NPM" alt="NPM Downloads"/>
+    <img src="https://img.shields.io/npm/d18m/%40cresteem/minomax?style=for-the-badge&label=Downloads%20On%20NPM" alt="NPM Downloads"/>
   </a>
 </span>
 
 <span>
   <a href="">
-    <img src="https://img.shields.io/github/stars/uname-holder/reponame-holder?style=for-the-badge&label=Stars" alt="GitHub Repo stars"/>
+    <img src="https://img.shields.io/github/stars/cresteem/Minomax?style=for-the-badge&label=Stars" alt="GitHub Repo stars"/>
   </a>
 </span>
 
@@ -131,14 +119,21 @@
 
 ## Features and Benefits ✨
 
-- [f1]
-- [f2]
-- [fn]
+* **Image Compression**: Automatically reduce image file sizes without sacrificing quality.
+* **Video Compression**: Achieve significant video compression, maintaining quality while reducing file size.
+* **Image Set Generation**: Create multiple image sets for different devices, enhancing visual performance across all screens.
+* **Web Document Compression**: Minify and compress JavaScript, HTML, and CSS files for faster load times.
+* **Automatic Tag Conversion**: Convert image tags into modern picture tags with media queries, catering to different devices with image sets.
+* **Video Thumbnails**: Generate video thumbnails and include them automatically in the HTML, similar to the handling of picture tags from image tags.
+* **Flexible Operation**: Utilize Minomax through an API or a Command Line Interface (CLI), offering flexibility to suit your workflow.
 
 ## Use Cases ✅
-
-- [usecase 1]
-- [use case 2]
+* **Optimizing Images**: Compress large image files to speed up your website's load time.
+* **Video Compression**: Reduce the size of video files to improve performance without losing quality.
+* **Responsive Design**: Generate optimized image sets for various devices, ensuring a seamless experience across all screen sizes.
+* **Web Performance**: Minify and compress web documents to enhance your site's speed and reduce bandwidth usage.
+* **Dynamic Content Delivery**: Automatically convert and optimize image tags for responsive content delivery.
+* **Continuous Integration (CI) Integration**: Incorporate Minomax into your CI pipelines, like GitHub Actions or GitLab CI, for automated optimization during deployment.
 
 ---
 
@@ -158,30 +153,45 @@ Thank you for being part of this journey. Your support means the world to us. �
 
 ## Installation - Step-by-Step Guide 🪜
 
-[Installation instructions here]
+Follow Below link:
 
-- **Step 1:**
-- **Step 2:**
-- **Step 3:**
-- **Step 4:**
-- **Step 5:**
+[Getting Started with Minomax](https://minomax.cresteem.com/minomax-getting-started)
 
 ## Usage
 
-- [purpose heading]
-  [Demonstration here]
-
-```bash
-demo
-```
+Everything from top to bottom of Minomax available here - https://minomax.cresteem.com/
 
 ## In-Action 🤺
 
-[video] or [gif] or [image]
+Below reports and compression ratio measured with [Minomax-Demo](https://github.com/cresteem/Minomax-Demo) results, check out - https://github.com/cresteem/Minomax-Demo
+
+**Results Speak 📊**
+![minomax result](https://minomax.cresteem.com/report.png)
+
+### Image Compression
+* **Original Size**: 43.9 MB
+* **Compressed Size**: 1.44 MB
+* **Compression Ratio**: 96.72%
+
+![Minomax image compresion result 1](/in-action/result_1.png)
+
+![Minomax image compresion result 2](/in-action/result_2.png)
+
+![Minomax image compresion result 3](/in-action/result_3.png)
+
+### Video Compression
+* **Original Size**: 15.2 MB
+* **Compressed Size**: 1.04 MB
+* **Compression Ratio**: 93.16%
+
+### Web Document Compression
+* **Original Size**: 175 KB
+* **Compressed Size**: 131 KB
+* **Compression Ratio**: 25.14%
 
 ## License ©️
 
-This project is licensed under the [Apache License 2.0 or GNU General Public License v3.0 or MIT](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## Contributing to Our Project 🤝
 
@@ -197,7 +207,7 @@ Thank you for being part of this journey!
 
 ## Website 🌐
 
-<a id="url" href="https://darsan.in">[https://darsan.in]</a>
+<a id="url" href="https://minomax.cresteem.com">minomax.cresteem.com</a>
 
 ## Contact Information
 
@@ -205,7 +215,7 @@ For any questions, please reach out via connect@cresteem.com
 
 ## Credits 🙏🏻
 
-[credits to lib maintainers/creators]
+Minomax is an open-source project developed and maintained by [DARSAN](https://darsan.in/) at [CRESTEEM](https://cresteem.com/), a leading web development company.
 
 ---
 
@@ -276,10 +286,19 @@ For any questions, please reach out via connect@cresteem.com
 #### Topics
 
 <ul id="keywords">
-
-<li>A</li>
-<li>B</li>
-<li>C</li>
-<li>D</li>
-
+<li>web optimization</li>
+<li>image compression</li>
+<li>video compression</li>
+<li>web performance</li>
+<li>responsive design</li>
+<li>SEO</li>
+<li>CI/CD</li>
+<li>npm package</li>
+<li>automated optimization</li>
+<li>command line tool</li>
+<li>web development</li>
+<li>file compression</li>
+<li>dynamic content delivery</li>
+<li>fast load times</li>
+<li>api integration</li>
 </ul>
