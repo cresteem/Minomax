@@ -1,9 +1,7 @@
-import cssnano from "cssnano";
-import nanocss_adv from "cssnano-preset-advanced";
 import { readFile, writeFile } from "fs/promises";
 import { minify as HTMLminify } from "html-minifier";
+import { transform as lightningcss } from "lightningcss";
 import { extname } from "path";
-import postcss from "postcss";
 import configurations from "../../configLoader";
 import { allocateBatchSize, currentTime } from "../utils";
 import renameSelectors from "./css-mangler/renamer";
@@ -44,14 +42,17 @@ async function minifyJS(content: string): Promise<string> {
 
 function minifyCss(content: string): Promise<string> {
 	return new Promise((resolve, reject) => {
-		const postcssplugin: any[] = [cssnano({ preset: nanocss_adv })];
+		try {
+			const { code } = lightningcss({
+				filename: "input.css",
+				code: Buffer.from(content),
+				minify: true,
+			});
 
-		postcss(postcssplugin)
-			.process(content, { from: undefined })
-			.then((result) => {
-				resolve(result?.css ?? "");
-			})
-			.catch(reject);
+			resolve(code.toString() || "");
+		} catch (err) {
+			reject(err);
+		}
 	});
 }
 

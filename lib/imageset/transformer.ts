@@ -1,4 +1,4 @@
-import { CheerioAPI, Element, load } from "cheerio";
+import { CheerioAPI, load } from "cheerio";
 import { readFile } from "fs/promises";
 import {
 	ImageTagsRecord,
@@ -168,7 +168,7 @@ function _videoThumbnailLinker(
 	const htmlTree: CheerioAPI = load(htmlContent);
 
 	//video thumbnail includer
-	const videoTags: Element[] = htmlTree("video") as any;
+	const videoTags: Element[] | any[] = htmlTree("video") as any;
 
 	for (const videoTag of videoTags) {
 		let videoUrl: string =

@@ -1,4 +1,4 @@
-import { Cheerio, CheerioAPI, Element, load } from "cheerio";
+import { Cheerio, CheerioAPI, load } from "cheerio";
 import { readFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import configurations from "../../configLoader";
@@ -10,7 +10,7 @@ const {
 
 /* Responsible to process image tags, one at a time */
 function _processImgTag(
-	tag: Cheerio<Element>,
+	tag: Cheerio<Element | any>,
 	htmlfile: string,
 	htmlTree: CheerioAPI,
 ): Promise<SrcRecord> {
