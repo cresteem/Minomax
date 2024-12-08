@@ -10,7 +10,11 @@ import {
 	minomax,
 } from "../minomax";
 
+import iconAssociator from "./iconAssociator";
+import initConfig from "./initConfig";
+
 const program = new Command();
+const { destPath } = configurations;
 
 // Minomax command
 program
@@ -27,11 +31,7 @@ program
 		"wav1",
 	)
 	.option("-e, --encode [1 | 2 | 3]", "Video encoding level", parseInt, 3)
-	.option(
-		"-d, --dest <path>",
-		"Destination base path",
-		configurations.destPath,
-	)
+	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-i, --ignore <patterns>",
 		"Ignore path patterns",
@@ -62,11 +62,7 @@ program
 		"Image output format",
 		"webp",
 	)
-	.option(
-		"-d, --dest <path>",
-		"Destination base path",
-		configurations.destPath,
-	)
+	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-i, --ignore <patterns>",
 		"Ignore patterns",
@@ -98,11 +94,7 @@ program
 		"wav1",
 	)
 	.option("-e, --encode [1 | 2 | 3]", "Video encoding level", parseInt, 3)
-	.option(
-		"-d, --dest <path>",
-		"Destination base path",
-		configurations.destPath,
-	)
+	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-I, --ignore <patterns>",
 		"Ignore patterns",
@@ -129,11 +121,7 @@ program
 		(value) => value.split(","),
 		[],
 	)
-	.option(
-		"-d, --dest <path>",
-		"Destination base path",
-		configurations.destPath,
-	)
+	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-s, --searchBase <path>",
 		"File search base path",
@@ -164,11 +152,7 @@ program
 		(value) => value.split(","),
 		[],
 	)
-	.option(
-		"-d, --dest <path>",
-		"Destination base path",
-		configurations.destPath,
-	)
+	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-i, --ignore <patterns>",
 		"Ignore patterns",
@@ -181,6 +165,22 @@ program
 			options.dest,
 			options.ignore,
 		);
+	});
+
+// Init config template
+program
+	.command("init")
+	.description("Init configuration template")
+	.action(async () => {
+		try {
+			initConfig();
+			console.log("🚀 Minomax configuration initialised.");
+
+			await iconAssociator();
+		} catch (err) {
+			console.error("⚠️ Error initializing icon associations:", err);
+			process.exit(1);
+		}
 	});
 
 program.parse(process.argv);

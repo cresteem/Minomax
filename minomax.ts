@@ -4,6 +4,7 @@ import configurations from "./configLoader";
 import imageWorker from "./lib/image";
 import imageGenerator from "./lib/imageset/imageset";
 import {
+	ConfigurationOptions,
 	ImageWorkerOutputTypes,
 	ImageWorkerParamsMain,
 	VideoWorkerParamsMain,
@@ -236,3 +237,5 @@ export async function generateImageSets(
 		process.exit(1);
 	}
 }
+
+export type minomaxOptions = ConfigurationOptions;
