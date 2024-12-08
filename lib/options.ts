@@ -124,7 +124,7 @@ interface svgOptions {
 	plugins: Partial<svgoPlugings>[];
 }
 
-type screenSizesOptions = "1x" | "2x" | "3x" | "4x" | "5x" | "6x";
+type screenSizesOptions = "1X" | "2X" | "3X" | "4X" | "5X" | "6X";
 
 interface imageSetConfigurations {
 	/* 
