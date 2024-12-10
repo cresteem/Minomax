@@ -14,7 +14,7 @@ import iconAssociator from "./iconAssociator";
 import initConfig from "./initConfig";
 
 const program = new Command();
-const { destPath } = configurations;
+const { destPath } = configurations();
 
 // Minomax command
 program

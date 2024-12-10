@@ -1,8 +1,8 @@
 import { Cheerio, CheerioAPI, load } from "cheerio";
 import { readFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
-import configurations from "../../configLoader";
-import { ImageAttributes, ImageTagsRecord, SrcRecord } from "../types";
+import configurations from "../../../configLoader";
+import { ImageAttributes, ImageTagsRecord, SrcRecord } from "../../types";
 import { getImageSize } from "./cssrender";
 const {
 	imageSetConfigurations: { screenSizes },

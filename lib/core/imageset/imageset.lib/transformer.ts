@@ -7,8 +7,8 @@ import {
 	SrcRecord,
 } from "lib/types";
 import { basename, dirname, extname, join, relative, resolve } from "path";
-import configurations from "../../configLoader";
-import { writeContent } from "../utils";
+import configurations from "../../../configLoader";
+import { writeContent } from "../../utils";
 const {
 	imageSetConfigurations: { screenSizes },
 } = configurations;

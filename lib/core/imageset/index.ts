@@ -1,4 +1,4 @@
-import { htmlParser } from "./htmlparser";
+import { htmlParser } from "./imageset.lib/htmlparser";
 
 import { existsSync } from "fs";
 import { globSync } from "glob";
@@ -7,9 +7,9 @@ import { extname, join, relative } from "path";
 import configurations from "../../configLoader";
 import { ImageSetGenRecord, ImageTagsRecord } from "../types";
 import { currentTime } from "../utils";
-import nonSvgGen from "./generators/nonsvg";
-import svgGen from "./generators/svg";
-import transformer, { imgSetPathMaker } from "./transformer";
+import nonSvgGen from "./imageset.lib/generators/nonsvg";
+import svgGen from "./imageset.lib/generators/svg";
+import transformer, { imgSetPathMaker } from "./imageset.lib/transformer";
 const {
 	imageSetConfigurations: { screenSizes },
 } = configurations;

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { ConfigurationOptions } from "./lib/options";
+import { ConfigurationOptions } from "./lib/types";
 
 export default function loadConfig(): ConfigurationOptions {
 	const CONFIG_FILE_NAME = "minomax.config";
