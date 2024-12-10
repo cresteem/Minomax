@@ -6,7 +6,7 @@ import {
 	SelectorExtractorResponse,
 	UniqueSelectorsResponse,
 	WebDocFileListerResponse,
-} from "../../options";
+} from "../../types";
 
 function _fetchfiles(
 	webDocFilesPatterns: string[],

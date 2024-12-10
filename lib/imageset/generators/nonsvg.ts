@@ -4,7 +4,7 @@ import { dirname, join, relative } from "path";
 import { upscale } from "pixteroid";
 import sharp from "sharp";
 import configurations from "../../../configLoader";
-import { UpscalerResponse } from "../../options";
+import { UpscalerResponse } from "../../types";
 import { makeDirf } from "../../utils";
 
 function _getImageWidth(imagePath: string): Promise<number> {

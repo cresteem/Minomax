@@ -1,4 +1,4 @@
-import { ConfigurationOptions } from "./lib/options";
+import { ConfigurationOptions } from "./lib/types";
 
 const defaultConfig: ConfigurationOptions = {
 	encodeOptions: {
@@ -139,7 +139,7 @@ const defaultConfig: ConfigurationOptions = {
 		},
 		upscaleLevel: "level2",
 	},
-	destPath: "./dt",
+	destPath: "./outputs",
 };
 
 export default defaultConfig;

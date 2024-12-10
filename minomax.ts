@@ -8,7 +8,7 @@ import {
 	ImageWorkerOutputTypes,
 	ImageWorkerParamsMain,
 	VideoWorkerParamsMain,
-} from "./lib/options";
+} from "./lib/types";
 import { copyFiles } from "./lib/utils";
 import videoWorker from "./lib/video";
 import webDocWorker from "./lib/webdocs/webdocs";

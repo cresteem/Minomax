@@ -11,7 +11,7 @@ import {
 	avifEncodeOptions,
 	jpgEncodeOptions,
 	webpEncodeOptions,
-} from "./options";
+} from "./types";
 import { currentTime, makeDirf } from "./utils";
 const {
 	jpgEncodeOptions,

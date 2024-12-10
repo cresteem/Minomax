@@ -5,7 +5,7 @@ import { globSync } from "glob";
 import { freemem } from "os";
 import { extname, join, relative } from "path";
 import configurations from "../../configLoader";
-import { ImageSetGenRecord, ImageTagsRecord } from "../options";
+import { ImageSetGenRecord, ImageTagsRecord } from "../types";
 import { currentTime } from "../utils";
 import nonSvgGen from "./generators/nonsvg";
 import svgGen from "./generators/svg";

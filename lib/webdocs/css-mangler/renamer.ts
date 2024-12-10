@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { readFile } from "fs/promises";
 import { join, relative } from "path";
-import { NewNamesMakerResponse } from "../../options";
+import { NewNamesMakerResponse } from "../../types";
 import { allocateBatchSize, writeContent } from "../../utils";
 import selectorExtractor from "./extracter";
 

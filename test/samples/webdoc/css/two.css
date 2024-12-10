@@ -1,0 +1,39 @@
+/* Screen size 4X: 1921px to 2560px */
+@media (min-width: 1921px) and (max-width: 2560px) {
+    #cat, .cat {
+        width: 250px;
+        height: 200px;
+    }
+    #dog, .dog {
+        width: 300px;
+        height: 220px;
+    }
+    #horse, .horse {
+        width: 350px;
+        height: 250px;
+    }
+    #flower, .flower {
+        width: 280px;
+        height: 220px;
+    }
+}
+
+/* Screen size 5X: 2561px to 3840px */
+@media (min-width: 2561px) and (max-width: 3840px) {
+    #cat, .cat {
+        width: 300px;
+        height: 250px;
+    }
+    #dog, .dog {
+        width: 350px;
+        height: 280px;
+    }
+    #horse, .horse {
+        width: 400px;
+        height: 300px;
+    }
+    #flower, .flower {
+        width: 350px;
+        height: 280px;
+    }
+}
