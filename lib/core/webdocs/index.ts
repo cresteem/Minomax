@@ -3,7 +3,7 @@ import { minify as HTMLminify } from "html-minifier";
 import { transform as lightningcss } from "lightningcss";
 import { extname } from "path";
 import configurations from "../../configLoader";
-import { allocateBatchSize, currentTime } from "../utils";
+import { calculateBatchSize, currentTime } from "../utils";
 import renameSelectors from "./css-mangler/renamer";
 
 function minifyHtml(content: string): Promise<string> {
@@ -124,7 +124,7 @@ export default async function webDocWorker(
 		noDirPatterns = ["./node_modules/**", destinationBase + "/**"];
 	}
 
-	const batchSize: number = allocateBatchSize(400);
+	const batchSize: number = calculateBatchSize(400);
 
 	console.log(
 		`\n[${currentTime()}] +++> Web docs minification process started.`,

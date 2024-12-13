@@ -12,7 +12,11 @@ export function currentTime(): string {
 	return `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`;
 }
 
-export function allocateBatchSize(perProcMem: number) {
+export function calculateBatchSize({
+	perProcMem,
+}: {
+	perProcMem: number;
+}) {
 	const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
 	const batchSize: number = Math.round(freememInMB / perProcMem);
 	return batchSize;
@@ -39,7 +43,7 @@ export async function copyFiles(
 	filePaths: string[],
 	destinationBasePath: string,
 ) {
-	const batchSize: number = allocateBatchSize(100);
+	const batchSize: number = calculateBatchSize({ perProcMem: 100 });
 
 	const promises: (() => Promise<void>)[] = [];
 
