@@ -45,15 +45,15 @@ interface avifOptions {
 	speed: number; //max effort (10-0)
 }
 
-export interface jpgEncodeOptions {
+export interface JpgEncodeOptions {
 	mozjpeg: mozjpegOptions;
 }
 
-export interface webpEncodeOptions {
+export interface WebpEncodeOptions {
 	webp: webpOption;
 }
 
-export interface avifEncodeOptions {
+export interface AvifEncodeOptions {
 	avif: avifOptions;
 }
 
@@ -119,7 +119,7 @@ type svgoPlugings =
 	| "removeOffCanvasPaths"
 	| "removeDimensions";
 
-interface svgOptions {
+export interface SvgOptions {
 	multipass: boolean;
 	plugins: Partial<svgoPlugings>[];
 }
@@ -138,10 +138,10 @@ interface imageSetConfigurations {
 }
 
 interface encodeOptions {
-	jpgEncodeOptions: jpgEncodeOptions;
-	webpEncodeOptions: webpEncodeOptions;
-	avifEncodeOptions: avifEncodeOptions;
-	svgOptions: svgOptions;
+	jpgEncodeOptions: JpgEncodeOptions;
+	webpEncodeOptions: WebpEncodeOptions;
+	avifEncodeOptions: AvifEncodeOptions;
+	svgOptions: SvgOptions;
 	cpuAllocation: number;
 }
 

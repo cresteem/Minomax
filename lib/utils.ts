@@ -1,7 +1,7 @@
-import { mkdirSync } from "fs";
-import { copyFile, writeFile } from "fs/promises";
-import { freemem } from "os";
-import { dirname, join, relative } from "path";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { copyFile, writeFile } from "node:fs/promises";
+import { freemem } from "node:os";
+import { dirname, join, relative } from "node:path";
 
 export function makeDirf(dirPath: string): void {
 	mkdirSync(dirPath, { recursive: true });
@@ -75,4 +75,8 @@ export async function copyFiles(
 			console.log(err);
 		}
 	}
+}
+
+export function logWriter(logMessage: string) {
+	appendFileSync(join(process.cwd(), "minomax.err.log"), logMessage);
 }
