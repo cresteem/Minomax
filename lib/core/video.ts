@@ -83,7 +83,7 @@ export default class VideoWorker {
 		const batchSize: number = Math.floor(availmem / 1500) || 1;
 
 		try {
-			console.log(`\n[${currentTime()}] +++> Video Encoding started.`);
+			console.log(`\n[${currentTime()}] +++> ⏰ Video Encoding started.`);
 
 			console.log(`Number of videos in queue: ${videoPaths.length}`);
 			console.log(`Number of encodes at a time: ${batchSize}`);
@@ -100,10 +100,10 @@ export default class VideoWorker {
 				throw new Error("Passive error in shell");
 			}
 
-			console.log(`[${currentTime()}] ===> Videos were encoded.`);
+			console.log(`[${currentTime()}] ===> ✅ Videos were encoded.`);
 
 			console.log(
-				`\n[${currentTime()}] +++> Thumbnail generation started.`,
+				`\n[${currentTime()}] +++> ⏰ Thumbnail generation started.`,
 			);
 
 			for (const videoPath of videoPaths) {
@@ -114,7 +114,7 @@ export default class VideoWorker {
 				);
 			}
 
-			console.log(`[${currentTime()}] ===> Thumbnails were generated.`);
+			console.log(`[${currentTime()}] ===> ✅ Thumbnails were generated.`);
 		} catch (error: any) {
 			console.log(
 				"Minomax: Unexpected error while encoding videos\n",

@@ -272,7 +272,7 @@ export default class ImageWorker {
 
 		console.log(`Number of images: ${imagePaths.length}`);
 
-		console.log(`[${currentTime()}] +++> Image Encoding Started`);
+		console.log(`[${currentTime()}] +++> ⏰ Image Encoding Started`);
 
 		if (targetFormat === "svg") {
 			try {
@@ -282,10 +282,10 @@ export default class ImageWorker {
 				}).optimise(imagePaths, destinationBasePath);
 
 				console.log(
-					`[${currentTime()}] ===> Images are optimised with SVG format.`,
+					`[${currentTime()}] ===> ✅ Images are optimised with SVG format.`,
 				);
 			} catch (err) {
-				console.log("SVG optimization failed", err);
+				console.log("❌ SVG optimization failed", err);
 				process.exit(1);
 			}
 		} else {
@@ -303,7 +303,7 @@ export default class ImageWorker {
 					: false;
 
 			if (!encodeOptions) {
-				console.error("Provided image extension is unsupported");
+				console.error("❌ Provided image extension is unsupported");
 				process.exit(1);
 			}
 
@@ -314,11 +314,11 @@ export default class ImageWorker {
 				}).encode(imagePaths, encodeOptions, destinationBasePath);
 
 				console.log(
-					`[${currentTime()}] ===> Images are optimised with ${targetFormat.toUpperCase()} format.`,
+					`[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
 				);
 			} catch (error) {
 				console.error(
-					"Something wrong occurred while encoding images\n",
+					"❌ Something wrong occurred while encoding images\n",
 					error,
 				);
 				process.exit(1);

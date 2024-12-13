@@ -158,7 +158,7 @@ class _SelectorsReplacer {
 	}
 }
 
-export default class SelectorsRenamer {
+export default class SelectorsMangler {
 	constructor() {}
 
 	//generate alteration names for selectors

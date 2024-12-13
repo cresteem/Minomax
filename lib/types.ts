@@ -145,7 +145,7 @@ interface encodeOptions {
 	cpuAllocation: number;
 }
 
-interface HtmlOptions {
+export interface HtmlOptions {
 	removeComments: boolean;
 	removeRedundantAttributes: boolean;
 	collapseWhitespace: boolean;

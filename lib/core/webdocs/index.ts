@@ -1,159 +1,64 @@
-import { readFile, writeFile } from "fs/promises";
-import { minify as HTMLminify } from "html-minifier";
-import { transform as lightningcss } from "lightningcss";
-import { extname } from "path";
-import configurations from "../../configLoader";
-import { calculateBatchSize, currentTime } from "../utils";
-import renameSelectors from "./css-mangler/renamer";
+import { extname } from "node:path";
+import { ConfigurationOptions, HtmlOptions } from "../../types";
+import { calculateBatchSize, currentTime } from "../../utils";
+import Minifier from "./minifier";
+import SelectorsMangler from "./selector-mangler/renamer";
 
-function minifyHtml(content: string): Promise<string> {
-	const {
-		webdoc: { htmloptions },
-	} = configurations;
+export default class WebDocsWorker {
+	#destPath: string;
+	#htmloptions: HtmlOptions;
 
-	return new Promise((resolve, reject) => {
-		let minifiedContent: string;
+	constructor(configurations: ConfigurationOptions) {
+		const {
+			destPath,
+			webdoc: { htmloptions },
+		} = configurations;
 
-		try {
-			minifiedContent = HTMLminify(content, htmloptions);
-		} catch (err) {
-			reject(err);
-		}
-
-		setTimeout(() => {
-			resolve(minifiedContent);
-		}, 1);
-	});
-}
-
-async function minifyJS(content: string): Promise<string> {
-	return new Promise((resolve, reject) => {
-		import("terser")
-			.then(({ minify }) => {
-				minify(content)
-					.then((result) => {
-						resolve(result?.code ?? "");
-					})
-					.catch(reject);
-			})
-			.catch(reject);
-	});
-}
-
-function minifyCss(content: string): Promise<string> {
-	return new Promise((resolve, reject) => {
-		try {
-			const { code } = lightningcss({
-				filename: "input.css",
-				code: Buffer.from(content),
-				minify: true,
-			});
-
-			resolve(code.toString() || "");
-		} catch (err) {
-			reject(err);
-		}
-	});
-}
-
-async function _minifier(
-	mangledFiles: string[],
-	fileType: "css" | "html" | "js",
-	batchSize: number,
-): Promise<void> {
-	const promises: (() => Promise<void>)[] = [];
-
-	let minifyFunction: Function;
-
-	switch (fileType) {
-		case "css":
-			minifyFunction = minifyCss;
-			break;
-		case "html":
-			minifyFunction = minifyHtml;
-			break;
-		case "js":
-			minifyFunction = minifyJS;
-			break;
+		this.#destPath = destPath;
+		this.#htmloptions = htmloptions;
 	}
 
-	mangledFiles.forEach((mangledFile: string) => {
-		promises.push((): Promise<void> => {
-			return new Promise((resolve, reject) => {
-				readFile(mangledFile, { encoding: "utf8" })
-					.then((content: string) => {
-						minifyFunction(content)
-							.then((result: any) => {
-								writeFile(mangledFile, result, {
-									encoding: "utf8",
-								})
-									.then(resolve)
-									.catch(reject);
-							})
-							.catch(reject);
-					})
-					.catch(reject);
-			});
-		});
-	});
-
-	const promiseBatches = [];
-
-	for (let i = 0; i < promises.length; i += batchSize) {
-		promiseBatches.push(promises.slice(i, i + batchSize));
-	}
-
-	for (const batch of promiseBatches) {
-		const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-		try {
-			await Promise.all(activatedBatch);
-		} catch (err) {
-			console.log(err);
-		}
-	}
-}
-
-export default async function webDocWorker(
-	webDocFilesPatterns: string[],
-	destinationBase: string = configurations.destPath,
-	fileSearchBasePath: string,
-	noDirPatterns: string[] = [],
-): Promise<void> {
-	if (noDirPatterns.length === 0) {
-		noDirPatterns = ["./node_modules/**", destinationBase + "/**"];
-	}
-
-	const batchSize: number = calculateBatchSize(400);
-
-	console.log(
-		`\n[${currentTime()}] +++> Web docs minification process started.`,
-	);
-
-	const mangledFiles: Awaited<string[]> = await renameSelectors(
+	async uglify({
 		webDocFilesPatterns,
-		destinationBase,
-		noDirPatterns,
 		fileSearchBasePath,
-	);
+		destinationBase = this.#destPath,
+		noDirPatterns = [],
+	}: {
+		webDocFilesPatterns: string[];
+		fileSearchBasePath: string;
+		destinationBase: string;
+		noDirPatterns: string[];
+	}): Promise<void> {
+		/* default exclude patterns */
+		noDirPatterns.push(...["./node_modules/**", destinationBase + "/**"]);
 
-	console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
-	console.log(`Number of Web docs at a time: ${batchSize}`);
+		console.log(
+			`\n[${currentTime()}] +++> ⏰ Web Docs uglify process started.`,
+		);
 
-	const mangledHTMLFiles: string[] = [...mangledFiles].filter(
-		(file) => extname(file) === ".html",
-	);
-	await _minifier(mangledHTMLFiles, "html", batchSize);
+		const { renameSelectors } = new SelectorsMangler();
+		const mangledFiles: Awaited<string[]> = await renameSelectors(
+			webDocFilesPatterns,
+			destinationBase,
+			noDirPatterns,
+			fileSearchBasePath,
+		);
 
-	const mangledCSSFiles: string[] = [...mangledFiles].filter(
-		(file) => extname(file) === ".css",
-	);
-	await _minifier(mangledCSSFiles, "css", batchSize);
+		const batchSize: number = calculateBatchSize({ perProcMem: 400 });
 
-	const mangledJSFiles: string[] = [...mangledFiles].filter(
-		(file) => extname(file) === ".js",
-	);
-	await _minifier(mangledJSFiles, "js", batchSize);
+		console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
+		console.log(`Number of Web docs at a time: ${batchSize}`);
 
-	console.log(`\n[${currentTime()}] +++> Web docs were minified.`);
+		const { minify } = new Minifier({ htmloptions: this.#htmloptions });
+
+		const webDocExtensions: string[] = [".html", ".css", ".js"];
+		for (const extension of webDocExtensions) {
+			const webdocs: string[] = mangledFiles.filter(
+				(file) => extname(file) === extension,
+			);
+			await minify(webdocs, extension.slice(1) as any, batchSize);
+		}
+
+		console.log(`\n[${currentTime()}] +++> ✅ Web docs were minified.`);
+	}
 }
