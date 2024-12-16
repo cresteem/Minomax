@@ -283,7 +283,7 @@ export default class ImgTagTransformer {
 		return transformedHtmls;
 	}
 
-	async transformer(
+	async transform(
 		htmlsRecords: ImageTagsRecord[],
 		destinationBase: string = "dist",
 		batchSize: number = 10 /* Read and write only */,

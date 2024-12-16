@@ -15,22 +15,10 @@ import { makeDirf } from "../../../../utils";
 export default class RasterisedImageSetGenerator {
 	#upscaleLevel: UpscaleLevels;
 
-	constructor({
-		baseImagePath,
-		targetWidth,
-		destinationPath,
-		imageSetConfigurations,
-	}: {
-		baseImagePath: string;
-		targetWidth: number;
-		destinationPath: string;
-		imageSetConfigurations: ImageSetConfigurations;
-	}) {
+	constructor(imageSetConfigurations: ImageSetConfigurations) {
 		const { upscaleLevel } = imageSetConfigurations;
 
 		this.#upscaleLevel = upscaleLevel;
-
-		this.#main({ baseImagePath, targetWidth, destinationPath });
 	}
 
 	#_getImageWidth(imagePath: string): Promise<number> {
@@ -153,7 +141,7 @@ export default class RasterisedImageSetGenerator {
 		});
 	}
 
-	#main({
+	main({
 		baseImagePath,
 		targetWidth,
 		destinationPath,
