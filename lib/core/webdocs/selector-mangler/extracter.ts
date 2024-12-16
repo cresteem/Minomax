@@ -7,6 +7,7 @@ import {
 	UniqueSelectorsResponse,
 	WebDocFileListerResponse,
 } from "../../../types";
+import { terminate } from "../../../utils";
 
 export default class SelectorsExtractor {
 	availableSelectors: SelectorExtractorResponse;
@@ -52,8 +53,7 @@ export default class SelectorsExtractor {
 				cssContents += currentCssContent + "\n";
 			});
 		} catch (err) {
-			console.error("Error reading CSS file\n", err);
-			process.exit(1);
+			terminate({ reason: "Error reading CSS file\n" + err });
 		}
 
 		return { cssContents: cssContents, webDocFiles: webDocFiles };
@@ -130,8 +130,7 @@ export default class SelectorsExtractor {
 			parse(cssContents)?.stylesheet?.rules || false;
 
 		if (!cssRules) {
-			console.log("⚠️ Failed parsing CSS rules");
-			process.exit(1);
+			terminate({ reason: "⚠️ Failed parsing CSS rules" });
 		}
 
 		let { uniqueClassNames, uniqueIds } =

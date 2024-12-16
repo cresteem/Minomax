@@ -10,6 +10,7 @@ import {
 	minomax,
 } from "../minomax";
 
+import { terminate } from "lib/utils";
 import iconAssociator from "./iconAssociator";
 import initConfig from "./initConfig";
 
@@ -178,8 +179,9 @@ program
 
 			await iconAssociator();
 		} catch (err) {
-			console.error("⚠️ Error initializing icon associations:", err);
-			process.exit(1);
+			terminate({
+				reason: "⚠️ Error initializing icon associations:\t" + err,
+			});
 		}
 	});
 

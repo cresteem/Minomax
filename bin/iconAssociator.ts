@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "fs/promises";
+import { terminate } from "lib/utils";
 import { copyFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -95,7 +96,6 @@ function copyMinomaxIcon(): void {
 		mkdirSync(dirname(destPath), { recursive: true });
 		copyFileSync(source, destPath);
 	} catch (err) {
-		console.log("Error copying icon: ", err);
-		process.exit(1);
+		terminate({ reason: "Error copying icon: " + err });
 	}
 }

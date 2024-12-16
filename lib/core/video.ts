@@ -7,7 +7,7 @@ import ffprobeIns from "@ffprobe-installer/ffprobe";
 import ffmpeg from "fluent-ffmpeg";
 
 import { ConfigurationOptions } from "../../lib/types";
-import { currentTime, makeDirf } from "../utils";
+import { currentTime, makeDirf, terminate } from "../utils";
 
 export default class VideoWorker {
 	#destPath: string;
@@ -116,12 +116,12 @@ export default class VideoWorker {
 
 			console.log(`[${currentTime()}] ===> ✅ Thumbnails were generated.`);
 		} catch (error: any) {
-			console.log(
-				"Minomax: Unexpected error while encoding videos\n",
-				"Minomax process halted\n",
-				error,
-			);
-			process.exit(1);
+			terminate({
+				reason:
+					"Minomax: Unexpected error while encoding videos\n" +
+					"Minomax process halted\n" +
+					error,
+			});
 		}
 	}
 }

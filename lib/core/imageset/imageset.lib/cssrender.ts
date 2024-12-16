@@ -1,13 +1,58 @@
-import puppeteer, { Browser } from "puppeteer";
+import puppeteer, { type Browser, Page } from "puppeteer";
+import { ImageSizeResponse } from "../../../types";
 
-export function getImageSize(
+async function _closeBrowser(browser: Browser) {
+	if (browser) {
+		try {
+			// Adding a slight delay before closing the browser
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await browser.close();
+		} catch (err) {
+			console.error("Error closing browser:", err);
+		}
+	}
+}
+
+function _getImageSize({
+	page,
+	screenWidth,
+	selector,
+}: {
+	page: Page;
+	screenWidth: number;
+	selector: string;
+}): Promise<ImageSizeResponse> {
+	return new Promise(async (resolve, reject) => {
+		try {
+			await page.setViewport({
+				width: screenWidth,
+				height: 780,
+			});
+
+			const imageSize = await page.evaluate((selector: string) => {
+				const img: any = document.querySelector(selector);
+
+				return {
+					width: img?.width,
+					// height: img?.height,
+				};
+			}, selector);
+
+			resolve({ screenWidth: imageSize });
+		} catch (err) {
+			reject(`Error calculating image size, at ${selector}\n${err}`);
+		}
+	});
+}
+
+export function getImageSizes(
 	selectors: { id: string; classes: string[] },
 	htmlPath: string,
 	screenSizes: Record<string, number>,
-): Promise<Record<string, number>> {
-	/* let prevsec: number = new Date().getTime(); */
+): Promise<ImageSizeResponse> {
+	const selector: string = selectors?.id || selectors?.classes[0] || "img";
 
-	return new Promise(async (complete, incomplete) => {
+	return new Promise(async (resolve, reject) => {
 		let browser: Browser = {} as Browser;
 
 		try {
@@ -17,87 +62,38 @@ export function getImageSize(
 				args: ["--start-maximized"],
 			});
 
-			const imageSizes: Record<string, number> = {};
+			const page = await browser.newPage();
 
-			const promises: (() => Promise<void>)[] = Object.keys(
+			await page.goto(htmlPath, { timeout: 60000 });
+
+			const imageSizes: ImageSizeResponse = {};
+
+			const promises: (() => Promise<ImageSizeResponse>)[] = Object.keys(
 				screenSizes,
-			).map((screenKey) => {
-				return (): Promise<void> => {
-					return new Promise(async (resolve, reject) => {
-						try {
-							const page = await browser.newPage();
-							const nativeScreenSize = await page.evaluate(() => ({
-								height: window.screen.availHeight,
-							}));
+			).map(
+				(screenKey: string) => (): Promise<ImageSizeResponse> =>
+					_getImageSize({
+						page: page,
+						screenWidth: screenSizes[screenKey],
+						selector: selector,
+					}),
+			);
 
-							await page.setViewport({
-								width: screenSizes[screenKey],
-								height: nativeScreenSize.height,
-							});
-
-							await page.goto(htmlPath, { timeout: 60000 });
-
-							const selector: string =
-								selectors?.id || selectors?.classes[0] || "img";
-
-							const imageSize = await page.evaluate((selector: string) => {
-								const img: any = document.querySelector(selector);
-
-								return {
-									width: img?.width,
-									// height: img?.height,
-								};
-							}, selector);
-
-							imageSizes[screenKey] = imageSize as any;
-							await page.close();
-							resolve();
-						} catch (err) {
-							reject(err);
-						}
-					});
-				};
-			});
-
-			/*  */
-			/* Batching promises */
-			const batchSize: number = 1;
-			const promiseBatches: (() => Promise<void>)[][] = [];
-
-			for (let i = 0; i < promises.length; i += batchSize) {
-				promiseBatches.push(promises.slice(i, i + batchSize));
-			}
-
-			/* Activating batches */
-			for (const batch of promiseBatches) {
-				const activatedBatch: Promise<void>[] = batch.map((func) =>
-					func(),
-				);
-
+			/* Activating promise */
+			for (const promise of promises) {
 				try {
-					await Promise.all(activatedBatch);
+					const resolvedImageSize = await promise();
+					Object.assign(imageSizes, resolvedImageSize);
 				} catch (err) {
 					console.log(err);
 				}
 			}
 
-			/* const ctime = new Date().getTime();
-			console.log(Math.floor(ctime - prevsec));
-			prevsec = ctime; */
-
-			complete(imageSizes);
+			_closeBrowser(browser);
+			resolve(imageSizes);
 		} catch (err) {
-			incomplete(err);
-		} finally {
-			if (browser) {
-				try {
-					// Adding a slight delay before closing the browser
-					await new Promise((resolve) => setTimeout(resolve, 1000));
-					await browser.close();
-				} catch (err) {
-					console.error("Error closing browser:", err);
-				}
-			}
+			_closeBrowser(browser);
+			reject(err);
 		}
 	});
 }

@@ -13,7 +13,7 @@ import {
 	SvgOptions,
 	WebpEncodeOptions,
 } from "../types";
-import { currentTime, logWriter, makeDirf } from "../utils";
+import { currentTime, logWriter, makeDirf, terminate } from "../utils";
 
 class _SVGWorker {
 	#cpuAllocation: number;
@@ -96,8 +96,7 @@ class _SVGWorker {
 		try {
 			await this.#_svgBatchHandler(outputPromises);
 		} catch (err: any) {
-			console.log("Error while batch processing\n", err);
-			process.exit(1);
+			terminate({ reason: "Error while batch processing\n" + err });
 		}
 	}
 }
@@ -266,8 +265,9 @@ export default class ImageWorker {
 		destinationBasePath: string = this.#destPath,
 	): Promise<void> {
 		process.on("SIGINT", () => {
-			console.log("User interrupted encoding process. Shutting down....");
-			process.exit(1);
+			terminate({
+				reason: "User interrupted encoding process. Shutting down....",
+			});
 		});
 
 		console.log(`Number of images: ${imagePaths.length}`);
@@ -285,8 +285,7 @@ export default class ImageWorker {
 					`[${currentTime()}] ===> ✅ Images are optimised with SVG format.`,
 				);
 			} catch (err) {
-				console.log("❌ SVG optimization failed", err);
-				process.exit(1);
+				terminate({ reason: "❌ SVG optimization failed" + err });
 			}
 		} else {
 			const encodeOptions:
@@ -303,8 +302,9 @@ export default class ImageWorker {
 					: false;
 
 			if (!encodeOptions) {
-				console.error("❌ Provided image extension is unsupported");
-				process.exit(1);
+				terminate({
+					reason: "❌ Provided image extension is unsupported",
+				});
 			}
 
 			try {
@@ -317,11 +317,10 @@ export default class ImageWorker {
 					`[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
 				);
 			} catch (error) {
-				console.error(
-					"❌ Something wrong occurred while encoding images\n",
-					error,
-				);
-				process.exit(1);
+				terminate({
+					reason:
+						"❌ Something wrong occurred while encoding images\n" + error,
+				});
 			}
 		}
 	}

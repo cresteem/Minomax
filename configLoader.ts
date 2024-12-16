@@ -1,3 +1,4 @@
+import { terminate } from "lib/utils";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { ConfigurationOptions } from "./lib/types";
@@ -16,8 +17,7 @@ export default function loadConfig(): ConfigurationOptions {
 		try {
 			projectConfig = require(projectConfigFile).default;
 		} catch (err) {
-			console.log("Error while loading settings\n", err);
-			process.exit(1);
+			terminate({ reason: "Error while loading settings\n" + err });
 		}
 	}
 

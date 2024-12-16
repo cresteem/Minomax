@@ -3,8 +3,17 @@ import { copyFile, writeFile } from "node:fs/promises";
 import { freemem } from "node:os";
 import { dirname, join, relative } from "node:path";
 
+export function terminate({ reason }: { reason: string }): void {
+	console.error(reason);
+	process.exit(1);
+}
+
 export function makeDirf(dirPath: string): void {
-	mkdirSync(dirPath, { recursive: true });
+	try {
+		mkdirSync(dirPath, { recursive: true });
+	} catch (err) {
+		terminate({ reason: `Error making directory\n${err}` });
+	}
 }
 
 export function currentTime(): string {

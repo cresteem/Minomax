@@ -124,17 +124,23 @@ export interface SvgOptions {
 	plugins: Partial<svgoPlugings>[];
 }
 
-type screenSizesOptions = "1X" | "2X" | "3X" | "4X" | "5X" | "6X";
+type ScreenSizesConstants = "1X" | "2X" | "3X" | "4X" | "5X" | "6X";
 
-interface imageSetConfigurations {
+export type ScreenSizesRecordType = Partial<
+	Record<ScreenSizesConstants, number>
+>;
+
+export type UpscaleLevels = "level1" | "level2" | "level3";
+
+export interface ImageSetConfigurations {
 	/* 
 	  Image set generator settings.
 	  Sizes are width dependent.
 	  Pixel unit is used in size.
 	  Size always a upperlimit for each set (Example: x1:600) where 600px is upper limit
 	  */
-	screenSizes: Partial<Record<screenSizesOptions, number>>; //Screen sizes upper-limits
-	upscaleLevel: "level1" | "level2" | "level3";
+	screenSizes: ScreenSizesRecordType; //Screen sizes upper-limits
+	upscaleLevel: UpscaleLevels;
 }
 
 interface encodeOptions {
@@ -161,7 +167,7 @@ export interface HtmlOptions {
 
 export interface ConfigurationOptions {
 	encodeOptions: encodeOptions;
-	imageSetConfigurations: imageSetConfigurations;
+	imageSetConfigurations: ImageSetConfigurations;
 	destPath: string;
 	webdoc: { htmloptions: HtmlOptions };
 }
@@ -170,32 +176,16 @@ export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";
 
 export interface ImageTagsRecord {
 	htmlFile: string;
-	ImageRecords: SrcRecord[];
+	imageRecords: SrcRecordType[];
 }
 
-export class SrcRecord {
+export interface SrcRecordType {
 	imgTagReference: string;
 	imageLink: string;
 	id: string;
 	classes: string[];
-	imageSizes: Record<string, number>;
+	imageSizes: ImageSizeResponse;
 	attributes: ImageAttributes;
-
-	constructor(
-		imgTagReference: string,
-		imageLink: string,
-		id: string,
-		classes: string[],
-		imageSizes: Record<string, number>,
-		attributes: ImageAttributes,
-	) {
-		this.imageLink = imageLink; //String
-		this.id = id; //String
-		this.classes = classes; //Array
-		this.imageSizes = imageSizes;
-		this.attributes = attributes;
-		this.imgTagReference = imgTagReference;
-	}
 }
 
 export interface ImageAttributes {
@@ -260,3 +250,8 @@ export interface VideoWorkerParamsMain {
 	codecType: "wav1" | "mav1" | "mx265";
 	encodeLevel?: 1 | 2 | 3;
 }
+
+export type ImageSizeResponse = Record<
+	string,
+	{ width: number; height?: number }
+>;

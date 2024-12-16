@@ -1,25 +1,28 @@
-import { existsSync } from "fs";
-import { copyFile } from "fs/promises";
-import { dirname } from "path";
-import { makeDirf } from "../../utils";
+import { existsSync } from "node:fs";
+import { copyFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { makeDirf } from "../../../../utils";
 
-export default function svgGen(
-	baseImagePath: string,
-	destinationPath: string,
-): Promise<void> {
-	return new Promise((complete, reject) => {
+export default function svgGen({
+	baseImagePath,
+	destinationPath,
+}: {
+	baseImagePath: string;
+	destinationPath: string;
+}): Promise<void> {
+	return new Promise((resolve, reject) => {
 		makeDirf(dirname(destinationPath));
 
 		if (!existsSync(destinationPath)) {
 			copyFile(baseImagePath, destinationPath)
 				.then(() => {
-					complete();
+					resolve();
 				})
 				.catch((error: Error) => {
-					reject(error);
+					reject("Error copying svg file\n" + error);
 				});
 		} else {
-			complete();
+			resolve();
 		}
 	});
 }

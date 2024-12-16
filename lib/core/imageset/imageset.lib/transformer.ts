@@ -1,314 +1,337 @@
 import { CheerioAPI, load } from "cheerio";
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
 import {
+	basename,
+	dirname,
+	extname,
+	join,
+	relative,
+	resolve,
+	sep,
+} from "node:path";
+import {
+	ConfigurationOptions,
 	ImageTagsRecord,
 	ImgTagTransResponse,
 	PictureTagMakerResponse,
-	SrcRecord,
-} from "lib/types";
-import { basename, dirname, extname, join, relative, resolve } from "path";
-import configurations from "../../../configLoader";
-import { writeContent } from "../../utils";
-const {
-	imageSetConfigurations: { screenSizes },
-} = configurations;
+	SrcRecordType,
+} from "../../../types";
+import { terminate, writeContent } from "../../../utils";
 
-export function imgSetPathMaker(
-	metaOfHtmls: ImageTagsRecord[],
-): Record<string, Record<string, string>> {
-	/* results holder */
-	//Records<htmlfilename,record<screeenKey,imagepath>>
-	const imageSetsPath: Record<string, Record<string, string>> = {};
+export default class ImgTagTransformer {
+	#screenSizes;
 
-	metaOfHtmls.forEach((metaofHtml: ImageTagsRecord) => {
-		metaofHtml.ImageRecords.forEach((srcRecord: SrcRecord) => {
-			const srcPath: string = srcRecord.imageLink;
+	constructor(configurations: ConfigurationOptions) {
+		const {
+			imageSetConfigurations: { screenSizes },
+		} = configurations;
 
-			const baseImage: string = relative(".", srcPath);
+		this.#screenSizes = screenSizes;
+	}
 
-			const imageSizes: Record<string, number> = srcRecord.imageSizes;
+	imgSetPathMaker(
+		imgMetaOfHtmls: ImageTagsRecord[],
+	): Record<string, Record<string, string>> {
+		//Records<htmlfilename,record<screeenKey,imagepath>>
+		const imageSetsPath: Record<string, Record<string, string>> = {};
 
-			const imageUniqueKey = srcRecord.imageLink;
+		imgMetaOfHtmls.forEach((metaofHtml: ImageTagsRecord) => {
+			metaofHtml.imageRecords.forEach((srcRecord: SrcRecordType) => {
+				const srcPath: string = srcRecord.imageLink;
 
-			imageSetsPath[imageUniqueKey] = {};
+				const baseImage: string = relative(".", srcPath);
 
-			for (const setType of Object.keys(imageSizes)) {
-				const isSVG: boolean = extname(baseImage) === ".svg";
+				//img path as key
+				const imageUniqueKey = srcRecord.imageLink;
+
+				imageSetsPath[imageUniqueKey] = {};
+
+				for (const setType of Object.keys(srcRecord.imageSizes)) {
+					const isRasterizedImage: boolean = extname(baseImage) !== ".svg";
+
+					if (isRasterizedImage) {
+						const rasterizedImageName: string = basename(
+							baseImage,
+							extname(baseImage),
+						).concat(`@${setType}${extname(baseImage)}`);
+
+						const rasterizedImageDestPath: string = join(
+							dirname(srcPath),
+							setType,
+							rasterizedImageName,
+						);
+
+						imageSetsPath[imageUniqueKey][setType] =
+							rasterizedImageDestPath.replaceAll(sep, "/");
+					} else if (imageSetsPath[imageUniqueKey]["svg"] === undefined) {
+						const svgFileDestPath = join(
+							dirname(srcPath),
+							"svg",
+							basename(baseImage),
+						);
+
+						imageSetsPath[imageUniqueKey]["svg"] =
+							svgFileDestPath.replaceAll(sep, "/");
+					}
+				}
+			});
+		});
+
+		return imageSetsPath;
+	}
+
+	#_pictureTagMaker(
+		htmlsTagRecords: ImageTagsRecord[],
+	): Record<string, PictureTagMakerResponse[]> {
+		/* Results holder */
+		//Record<Htmlfilename,Records>
+		const pictureTags: Record<string, PictureTagMakerResponse[]> = {};
+
+		//Making paths
+		const imageSetsPaths: Record<
+			string,
+			Record<string, string>
+		> = this.imgSetPathMaker(htmlsTagRecords);
+
+		const mediaTargets: number[] = Object.values(
+			this.#screenSizes,
+		).reverse();
+		const mediaTargetKeys: string[] = Object.keys(
+			this.#screenSizes,
+		).reverse();
+
+		for (const htmlTagRecord of htmlsTagRecords) {
+			pictureTags[htmlTagRecord.htmlFile] = [];
+
+			for (const srcRecord of htmlTagRecord.imageRecords) {
+				let pictureTag: string;
+
+				const imageUniqueKey: string = srcRecord.imageLink;
+
+				const isSVG: boolean = extname(srcRecord.imageLink) === ".svg";
 
 				if (isSVG) {
-					const svgFileDestPath = join(
-						dirname(srcPath),
-						"svg",
-						basename(baseImage),
-					);
-
-					imageSetsPath[imageUniqueKey]["svg"] = svgFileDestPath.replace(
-						/\\/g,
-						"/",
-					);
-				} else if (!isSVG) {
-					const nonSvgFileName: string =
-						basename(baseImage, extname(baseImage)) +
-						`@${setType}${extname(baseImage)}`;
-
-					const nonSvgFileDestPath: string = join(
-						dirname(srcPath),
-						setType,
-						nonSvgFileName,
-					);
-
-					imageSetsPath[imageUniqueKey][setType] =
-						nonSvgFileDestPath.replace(/\\/g, "/");
-				}
-			}
-		});
-	});
-
-	return imageSetsPath;
-}
-
-function _pictureTagMaker(
-	htmlsRecords: ImageTagsRecord[],
-): Record<string, PictureTagMakerResponse[]> {
-	/* Results holder */
-	//Record<Htmlfilename,Records>
-	const pictureTags: Record<string, PictureTagMakerResponse[]> = {};
-
-	//Making paths
-	const imageSetsPaths: Record<
-		string,
-		Record<string, string>
-	> = imgSetPathMaker(htmlsRecords);
-
-	const mediaTargets: number[] = Object.values(screenSizes).reverse();
-	const mediaTargetKeys: string[] = Object.keys(screenSizes).reverse();
-
-	for (const htmlRecords of htmlsRecords) {
-		pictureTags[htmlRecords.htmlFile] = [];
-
-		for (const srcRecord of htmlRecords.ImageRecords) {
-			let pictureTag: string;
-
-			const imageUniqueKey: string = srcRecord.imageLink;
-
-			const isSVG: boolean = extname(srcRecord.imageLink) === ".svg";
-
-			if (isSVG) {
-				const relativeSrcPath: string = relative(
-					dirname(htmlRecords.htmlFile),
-					imageSetsPaths[imageUniqueKey]["svg"],
-				);
-
-				pictureTag = `<img src="${relativeSrcPath}" `;
-
-				//setting attributes
-				for (const [attrname, attrValue] of Object.entries(
-					srcRecord.attributes,
-				)) {
-					if (!attrValue) {
-						continue;
-					}
-
-					pictureTag += ` ${attrname}="${attrValue}"`;
-				}
-
-				//closing img tag
-				pictureTag += "/>";
-			} else {
-				pictureTag = "<picture>";
-
-				for (let index = 0; index < mediaTargets.length; index++) {
 					const relativeSrcPath: string = relative(
-						dirname(htmlRecords.htmlFile),
-						imageSetsPaths[imageUniqueKey][mediaTargetKeys[index]],
+						dirname(htmlTagRecord.htmlFile),
+						imageSetsPaths[imageUniqueKey]["svg"],
 					);
 
-					pictureTag += `<source media="(max-width:${mediaTargets[index]}px)" srcset="${relativeSrcPath}">`;
-				}
+					pictureTag = `<img src="${relativeSrcPath}" `;
 
-				//setting second level image as fallback "2x"
-				const relativeSrcPath: string = relative(
-					dirname(htmlRecords.htmlFile),
-					imageSetsPaths[imageUniqueKey][
-						mediaTargetKeys[mediaTargetKeys.length - 2]
-					],
-				);
-
-				pictureTag += `<img src="${relativeSrcPath}" `;
-
-				//setting attributes
-				for (const [attrname, attrValue] of Object.entries(
-					srcRecord.attributes,
-				)) {
-					if (!attrValue) {
-						continue;
+					//setting attributes
+					for (const [attrname, attrValue] of Object.entries(
+						srcRecord.attributes,
+					)) {
+						pictureTag += ` ${attrname}${
+							attrValue ? `="${attrValue}"` : ""
+						}`;
 					}
 
-					pictureTag += ` ${attrname}="${attrValue}"`;
+					//closing img tag
+					pictureTag += "/>";
+				} else {
+					pictureTag = "<picture>";
+
+					mediaTargets.forEach((mediaTarget, index) => {
+						const relativeSrcPath: string = relative(
+							dirname(htmlTagRecord.htmlFile),
+							imageSetsPaths[imageUniqueKey][mediaTargetKeys[index]],
+						);
+
+						pictureTag += `<source media="(max-width:${mediaTarget}px)" srcset="${relativeSrcPath}">`;
+					});
+
+					//setting second level image as fallback "2x"
+					const fallbackSrcPath: string = relative(
+						dirname(htmlTagRecord.htmlFile),
+						imageSetsPaths[imageUniqueKey][
+							mediaTargetKeys[mediaTargetKeys.length - 2]
+						],
+					);
+
+					pictureTag += `<img src="${fallbackSrcPath}" `;
+
+					//setting attributes
+					for (const [attrname, attrValue] of Object.entries(
+						srcRecord.attributes,
+					)) {
+						pictureTag += ` ${attrname}${
+							attrValue ? `="${attrValue}"` : ""
+						}`;
+					}
+
+					//closing img tag and picture tag
+					pictureTag += "/> </picture>";
 				}
 
-				//closing img tag and picture tag
-				pictureTag += "/> </picture>";
+				pictureTags[htmlTagRecord.htmlFile].push({
+					imgTagReference: srcRecord.imgTagReference,
+					newTag: pictureTag,
+				});
+			}
+		}
+		return pictureTags;
+	}
+
+	#_videoThumbnailLinker(
+		htmlFilePath: string,
+		htmlContent: string,
+	): string {
+		// Load the HTML content into Cheerio
+		const htmlTree: CheerioAPI = load(htmlContent);
+
+		//video thumbnail includer
+		const videoTags: Element[] | any[] = htmlTree("video") as any;
+
+		for (const videoTag of videoTags) {
+			const shallowVideoUrl: string | undefined =
+				htmlTree(videoTag).attr("src");
+
+			let videoUrl: string = shallowVideoUrl
+				? shallowVideoUrl
+				: htmlTree(videoTag).find("source:first-child").attr("src") || "";
+
+			if (!videoUrl) {
+				continue;
+			} else {
+				videoUrl = resolve(join(dirname(htmlFilePath), videoUrl));
 			}
 
-			pictureTags[htmlRecords.htmlFile].push({
-				imgTagReference: srcRecord.imgTagReference,
-				newTag: pictureTag,
-			});
+			const thumbnailUrl: string = join(
+				dirname(videoUrl),
+				"thumbnails",
+				basename(videoUrl, extname(videoUrl)).concat(".jpg"),
+			);
+
+			const relativeSrcPath: string = relative(
+				dirname(htmlFilePath),
+				thumbnailUrl,
+			).replaceAll(sep, "/");
+
+			htmlTree(videoTag).attr("poster", relativeSrcPath);
 		}
-	}
-	return pictureTags;
-}
 
-function _videoThumbnailLinker(
-	htmlFilePath: string,
-	htmlContent: string,
-): string {
-	// Load the HTML content into Cheerio
-	const htmlTree: CheerioAPI = load(htmlContent);
+		const htmlString: string = htmlTree.root().toString();
 
-	//video thumbnail includer
-	const videoTags: Element[] | any[] = htmlTree("video") as any;
-
-	for (const videoTag of videoTags) {
-		let videoUrl: string =
-			htmlTree(videoTag).find("source").attr("src") ?? "";
-		videoUrl = resolve(join(dirname(htmlFilePath), videoUrl));
-
-		const thumbnailUrl: string = join(
-			dirname(videoUrl),
-			"thumbnails",
-			basename(videoUrl, extname(videoUrl)) + ".jpg",
-		);
-
-		const relativeSrcPath: string = relative(
-			dirname(htmlFilePath),
-			thumbnailUrl,
-		).replace(/\\/g, "/");
-
-		htmlTree(videoTag).attr("poster", relativeSrcPath);
+		return htmlString;
 	}
 
-	const htmlString: string = htmlTree.root().toString();
+	async #_imgTagTransformer(
+		htmlsTagRecords: ImageTagsRecord[],
+		batchSize: number = 5,
+	): Promise<ImgTagTransResponse[]> {
+		//making picture tag for img tag
+		const pictureTags: Record<string, PictureTagMakerResponse[]> =
+			this.#_pictureTagMaker(htmlsTagRecords);
 
-	return htmlString;
-}
+		const htmlFiles: string[] = Object.keys(pictureTags);
 
-async function _imgTagTransformer(
-	htmlsRecords: ImageTagsRecord[],
-	batchSize: number = 5,
-): Promise<ImgTagTransResponse[]> {
-	//making picture tag for img tag
-	const pictureTags: Record<string, PictureTagMakerResponse[]> =
-		_pictureTagMaker(htmlsRecords);
+		const promises: (() => Promise<ImgTagTransResponse>)[] = htmlFiles.map(
+			(htmlFile) => (): Promise<ImgTagTransResponse> =>
+				new Promise((resolve, reject) => {
+					readFile(htmlFile, { encoding: "utf-8" })
+						.then((htmlContent: string) => {
+							let updatedContent: string = htmlContent;
 
-	const htmlFiles: string[] = Object.keys(pictureTags);
+							pictureTags[htmlFile].forEach((pictureTagMeta) => {
+								//replace tags
+								updatedContent = updatedContent.replace(
+									pictureTagMeta.imgTagReference,
+									pictureTagMeta.newTag,
+								);
+							});
 
-	const promises: (() => Promise<ImgTagTransResponse>)[] = [];
-
-	for (const htmlFile of htmlFiles) {
-		promises.push((): Promise<ImgTagTransResponse> => {
-			return new Promise((resolve, reject) => {
-				readFile(htmlFile, { encoding: "utf-8" })
-					.then((htmlContent: string) => {
-						let updatedContent: string = htmlContent;
-
-						const currentFilePictureTags = pictureTags[htmlFile];
-
-						for (
-							let index = 0;
-							index < currentFilePictureTags.length;
-							index++
-						) {
-							//replace tags
-							updatedContent = updatedContent.replace(
-								currentFilePictureTags[index].imgTagReference,
-								currentFilePictureTags[index].newTag,
+							resolve({
+								htmlFilePath: htmlFile,
+								updatedContent: updatedContent,
+							});
+						})
+						.catch((err: Error) => {
+							reject(
+								`Error reading file at transformer, file: ${htmlFile} \n${err}`,
 							);
-						}
-
-						resolve({
-							htmlFilePath: htmlFile,
-							updatedContent: updatedContent,
 						});
-					})
-					.catch((err: Error) => {
-						reject("error while replacing " + err);
-					});
-			});
-		});
-	}
-
-	const promiseBatches = [];
-
-	for (let i = 0; i < promises.length; i += batchSize) {
-		promiseBatches.push(promises.slice(i, i + batchSize));
-	}
-
-	let transformedHtmls: ImgTagTransResponse[] = [];
-
-	for (const batch of promiseBatches) {
-		const activatedBatch: Promise<ImgTagTransResponse>[] = batch.map(
-			(func) => func(),
+				}),
 		);
 
-		const batchResult: ImgTagTransResponse[] = await Promise.all(
-			activatedBatch,
-		);
+		const promiseBatches = [];
 
-		transformedHtmls = transformedHtmls.concat(batchResult);
+		for (let i = 0; i < promises.length; i += batchSize) {
+			promiseBatches.push(promises.slice(i, i + batchSize));
+		}
+
+		const transformedHtmls: ImgTagTransResponse[] = [];
+
+		for (const batch of promiseBatches) {
+			const activatedBatch: Promise<ImgTagTransResponse>[] = batch.map(
+				(func) => func(),
+			);
+
+			try {
+				const batchResult: ImgTagTransResponse[] = await Promise.all(
+					activatedBatch,
+				);
+
+				transformedHtmls.push(...batchResult);
+			} catch (err) {
+				terminate({
+					reason: `Batch process failed at sub-transformer\n${err}`,
+				});
+			}
+		}
+
+		return transformedHtmls;
 	}
 
-	return transformedHtmls;
-}
+	async transformer(
+		htmlsRecords: ImageTagsRecord[],
+		destinationBase: string = "dist",
+		batchSize: number = 10 /* Read and write only */,
+	): Promise<void> {
+		const transformedHtmls: Awaited<ImgTagTransResponse[]> =
+			await this.#_imgTagTransformer(htmlsRecords, batchSize);
 
-export default async function transformer(
-	htmlsRecords: ImageTagsRecord[],
-	destinationBase: string = "dist",
-	batchSize: number = 10 /* Read and write only */,
-): Promise<void> {
-	const transformedHtmls: ImgTagTransResponse[] = await _imgTagTransformer(
-		htmlsRecords,
-		batchSize,
-	);
+		const promises: (() => Promise<void>)[] = transformedHtmls.map(
+			(transformedHtml) => (): Promise<void> =>
+				new Promise((resolve, reject) => {
+					const newDestination: string = join(
+						destinationBase,
+						relative(process.cwd(), transformedHtml.htmlFilePath),
+					);
 
-	const promises: (() => Promise<void>)[] = [];
+					/* Adding poster for video  */
+					const result: string = this.#_videoThumbnailLinker(
+						transformedHtml.htmlFilePath,
+						transformedHtml.updatedContent,
+					);
 
-	transformedHtmls.forEach((transformedHtml) => {
-		const newDestination: string = join(
-			destinationBase,
-			relative(process.cwd(), transformedHtml.htmlFilePath),
+					writeContent(result, newDestination)
+						.then(resolve)
+						.catch((err) => {
+							reject(
+								`Error while writing transformed HTML to ${newDestination}\n${err}`,
+							);
+						});
+				}),
 		);
 
-		const result: string = _videoThumbnailLinker(
-			transformedHtml.htmlFilePath,
-			transformedHtml.updatedContent,
-		);
+		const promiseBatches: (() => Promise<void>)[][] = [];
 
-		promises.push((): Promise<void> => {
-			return new Promise((resolve, reject) => {
-				writeContent(result, newDestination)
-					.then(() => {
-						resolve();
-					})
-					.catch(reject);
-			});
-		});
-	});
+		/* Batching promises */
+		for (let i = 0; i < promises.length; i += batchSize) {
+			promiseBatches.push(promises.slice(i, i + batchSize));
+		}
+		/* Activating batches */
+		for (const batch of promiseBatches) {
+			const activatedBatch: Promise<void>[] = batch.map((func) => func());
 
-	const promiseBatches: (() => Promise<void>)[][] = [];
-
-	/* Batching promises */
-	for (let i = 0; i < promises.length; i += batchSize) {
-		promiseBatches.push(promises.slice(i, i + batchSize));
-	}
-	/* Activating batches */
-	for (const batch of promiseBatches) {
-		const activatedBatch: Promise<void>[] = batch.map((func) => func());
-		try {
-			await Promise.all(activatedBatch);
-		} catch (err) {
-			console.log(err);
+			try {
+				await Promise.all(activatedBatch);
+			} catch (err) {
+				terminate({
+					reason: `Batch process failed at transformer\n${err}`,
+				});
+			}
 		}
 	}
 }
