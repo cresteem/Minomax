@@ -189,6 +189,7 @@ export default class ImgTagTransformer {
 	#_videoThumbnailLinker(
 		htmlFilePath: string,
 		htmlContent: string,
+		variableImgFormat: ImageWorkerOutputTypes | false,
 	): string {
 		// Load the HTML content into Cheerio
 		const htmlTree: CheerioAPI = load(htmlContent);
@@ -213,7 +214,9 @@ export default class ImgTagTransformer {
 			const thumbnailUrl: string = join(
 				dirname(videoUrl),
 				"thumbnails",
-				basename(videoUrl, extname(videoUrl)).concat(".jpg"),
+				basename(videoUrl, extname(videoUrl)).concat(
+					`.${variableImgFormat}` || ".jpg",
+				),
 			);
 
 			const relativeSrcPath: string = relative(
@@ -327,6 +330,7 @@ export default class ImgTagTransformer {
 					const result: string = this.#_videoThumbnailLinker(
 						transformedHtml.htmlFilePath,
 						transformedHtml.updatedContent,
+						variableImgFormat,
 					);
 
 					writeContent(result, newDestination)
