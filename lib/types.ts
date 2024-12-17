@@ -169,7 +169,11 @@ export interface ConfigurationOptions {
 	encodeOptions: encodeOptions;
 	imageSetConfigurations: ImageSetConfigurations;
 	destPath: string;
-	webdoc: { htmloptions: HtmlOptions };
+	webdoc: { htmloptions: HtmlOptions; lookupPatterns: string[] };
+	removeOld: boolean;
+	ignorePatterns: string[];
+	imagePatterns: string[];
+	videoLookupPatterns: string[];
 }
 
 export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";

@@ -154,7 +154,7 @@ export default class ImageSetGenerator {
 	 *@param_1 - htmlPathGlob {String} || {Array} => path(s) of html file(s).
 	 *@param_2 - destination {String} => file destination =require( root to make all outputs.
 	 */
-	async imageGenerator(
+	async generate(
 		htmlPathPatterns: string[],
 		destinationBase: string = this.#configurations.destPath,
 		ignorePatterns: string[],

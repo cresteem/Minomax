@@ -133,8 +133,9 @@ export default class SelectorsExtractor {
 			terminate({ reason: "⚠️ Failed parsing CSS rules" });
 		}
 
-		let { uniqueClassNames, uniqueIds } =
-			this.#_extractUniqueSelectors(cssRules);
+		let { uniqueClassNames, uniqueIds } = this.#_extractUniqueSelectors(
+			cssRules as any,
+		);
 
 		uniqueClassNames = this.#_selectorsCleaner(uniqueClassNames);
 		uniqueIds = this.#_selectorsCleaner(uniqueIds);

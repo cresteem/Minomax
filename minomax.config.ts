@@ -128,6 +128,7 @@ const defaultConfig: ConfigurationOptions = {
 			removeStyleLinkTypeAttributes: true,
 			removeTagWhitespace: true,
 		},
+		lookupPatterns: ["**/*.css", "**/*.js", "**/*.html", "**/*.htm"],
 	},
 	imageSetConfigurations: {
 		screenSizes: {
@@ -140,6 +141,24 @@ const defaultConfig: ConfigurationOptions = {
 		upscaleLevel: "level2",
 	},
 	destPath: "./outputs",
+	removeOld: true,
+	ignorePatterns: ["node_modules/**"],
+	imagePatterns: [
+		"**/*.png",
+		"**/*.jpg",
+		"**/*.jpeg",
+		"**/*.bmp",
+		"**/*.webp",
+	],
+	videoLookupPatterns: [
+		"**/*.mp4",
+		"**/*.webm",
+		"**/*.mkv",
+		"**/*.wmv",
+		"**/*.flv",
+		"**/*.avi",
+		"**/*.mov",
+	],
 };
 
 export default defaultConfig;

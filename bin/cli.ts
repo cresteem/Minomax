@@ -1,25 +1,27 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import configurations from "../configLoader";
-import {
+
+import { terminate } from "../lib/utils";
+import iconAssociator from "./iconAssociator";
+import initConfig from "./initConfig";
+
+import Minomax from "../minomax";
+const {
 	compressImages,
 	compressVideos,
 	generateImageSets,
 	minifyWebdoc,
 	minomax,
-} from "../minomax";
-
-import { terminate } from "lib/utils";
-import iconAssociator from "./iconAssociator";
-import initConfig from "./initConfig";
+	configurations,
+} = new Minomax();
 
 const program = new Command();
-const { destPath } = configurations();
+const { destPath } = configurations;
 
 // Minomax command
 program
-	.command("make")
+	.command("prod")
 	.description("Run the minomax process")
 	.option(
 		"-f, --format [jpg | avif | webp]",
@@ -40,12 +42,15 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await minomax(
-			{ targetFormat: options.format },
-			{ codecType: options.codec, encodeLevel: options.encode },
-			options.dest,
-			options.ignore,
-		);
+		await minomax({
+			imageWorkerParams: { targetFormat: options.format },
+			videoWorkerParams: {
+				codecType: options.codec,
+				encodeLevel: options.encode,
+			},
+			destinationBasePath: options.dest,
+			ignorePatterns: options.ignore,
+		});
 	});
 
 // Compress Images command
@@ -71,12 +76,12 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await compressImages(
-			options.patterns,
-			options.format,
-			options.dest,
-			options.ignore,
-		);
+		await compressImages({
+			pathPatterns: options.patterns,
+			targetFormat: options.format,
+			destinationBasePath: options.dest,
+			ignorePatterns: options.ignore,
+		});
 	});
 
 // Compress Videos command
@@ -103,13 +108,13 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await compressVideos(
-			options.patterns,
-			options.codec,
-			options.encode,
-			options.dest,
-			options.ignore,
-		);
+		await compressVideos({
+			pathPatterns: options.patterns,
+			codecType: options.codec,
+			encodeLevel: options.encode,
+			destinationBasePath: options.dest,
+			ignorePatterns: options.ignore,
+		});
 	});
 
 // Minify Webdoc command
@@ -135,12 +140,12 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await minifyWebdoc(
-			options.patterns,
-			options.dest,
-			options.searchBase,
-			options.ignore,
-		);
+		await minifyWebdoc({
+			pathPatterns: options.patterns,
+			destinationBasePath: options.dest,
+			fileSearchBasePath: options.searchBase,
+			ignorePatterns: options.ignore,
+		});
 	});
 
 // Generate Image Sets command
@@ -161,11 +166,11 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await generateImageSets(
-			options.patterns,
-			options.dest,
-			options.ignore,
-		);
+		await generateImageSets({
+			pathPatterns: options.patterns,
+			destinationBasePath: options.dest,
+			ignorePatterns: options.ignore,
+		});
 	});
 
 // Init config template

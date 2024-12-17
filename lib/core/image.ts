@@ -157,7 +157,10 @@ class _RasterizedImageWorker {
 
 	encode(
 		imagePaths: string[],
-		encodeOptions: Record<string, any>,
+		encodeOptions:
+			| JpgEncodeOptions
+			| AvifEncodeOptions
+			| WebpEncodeOptions,
 		destinationBasePath: string,
 	): Promise<void> {
 		//number of concurrent process.
@@ -311,7 +314,7 @@ export default class ImageWorker {
 				//encoding for jpg/avif/webp
 				await new _RasterizedImageWorker({
 					cpuAllocation: this.#cpuAllocation,
-				}).encode(imagePaths, encodeOptions, destinationBasePath);
+				}).encode(imagePaths, encodeOptions as any, destinationBasePath);
 
 				console.log(
 					`[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
