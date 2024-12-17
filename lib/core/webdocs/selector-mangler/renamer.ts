@@ -1,3 +1,4 @@
+import { load } from "cheerio";
 import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -28,18 +29,23 @@ class _SelectorsReplacer {
 					idTarget,
 					`id=${this.#encloser}${newSelector.slice(1)}${this.#encloser}`,
 				);
-			} else {
-				const classTarget: RegExp = new RegExp(
-					"class=[\"']" + oldSelector.slice(1) + "[\"']",
-					"g",
-				);
 
-				content = content.replace(
-					classTarget,
-					`class=${this.#encloser}${newSelector.slice(1)}${
-						this.#encloser
-					}`,
+				//replace anchor href
+				content = content.replaceAll(
+					new RegExp(`href=["']${oldSelector}["']`, "g"),
+					`href="${newSelector}"`,
 				);
+			} else {
+				const $ = load(content);
+				$(oldSelector).each((_idx, elem) => {
+					//remove old
+					$(elem).removeClass(oldSelector.slice(1));
+
+					//add new
+					$(elem).addClass(newSelector.slice(1));
+				});
+
+				content = $.html();
 			}
 		});
 

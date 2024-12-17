@@ -36,27 +36,28 @@ export default class WebDocsWorker {
 			`\n[${currentTime()}] +++> ⏰ Web Docs uglify process started.`,
 		);
 
-		const { renameSelectors } = new SelectorsMangler();
-		const mangledFiles: Awaited<string[]> = await renameSelectors(
-			webDocFilesPatterns,
-			destinationBase,
-			noDirPatterns,
-			fileSearchBasePath,
-		);
+		const selectorsMangler = new SelectorsMangler();
+		const mangledFiles: Awaited<string[]> =
+			await selectorsMangler.renameSelectors(
+				webDocFilesPatterns,
+				destinationBase,
+				noDirPatterns,
+				fileSearchBasePath,
+			);
 
 		const batchSize: number = calculateBatchSize({ perProcMem: 400 });
 
 		console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
 		console.log(`Number of Web docs at a time: ${batchSize}`);
 
-		const { minify } = new Minifier({ htmloptions: this.#htmloptions });
+		const minifier = new Minifier({ htmloptions: this.#htmloptions });
 
 		const webDocExtensions: string[] = [".html", ".css", ".js"];
 		for (const extension of webDocExtensions) {
 			const webdocs: string[] = mangledFiles.filter(
 				(file) => extname(file) === extension,
 			);
-			await minify(webdocs, extension.slice(1) as any, batchSize);
+			await minifier.minify(webdocs, extension.slice(1) as any, batchSize);
 		}
 
 		console.log(`\n[${currentTime()}] +++> ✅ Web docs were minified.`);

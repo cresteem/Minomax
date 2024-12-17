@@ -8,6 +8,7 @@ import {
 	ConfigurationOptions,
 	ImageSetGenRecord,
 	ImageTagsRecord,
+	ImageWorkerOutputTypes,
 	SrcRecordType,
 } from "../../types";
 import { currentTime, terminate } from "../../utils";
@@ -156,11 +157,17 @@ export default class ImageSetGenerator {
 	 *@param_1 - htmlPathGlob {String} || {Array} => path(s) of html file(s).
 	 *@param_2 - destination {String} => file destination =require( root to make all outputs.
 	 */
-	async generate(
-		htmlPathPatterns: string[],
-		destinationBase: string = this.#configurations.destPath,
-		ignorePatterns: string[],
-	) {
+	async generate({
+		htmlPathPatterns,
+		ignorePatterns,
+		destinationBase = this.#configurations.destPath,
+		variableImgFormat,
+	}: {
+		variableImgFormat: ImageWorkerOutputTypes | false;
+		htmlPathPatterns: string[];
+		ignorePatterns: string[];
+		destinationBase: string;
+	}) {
 		const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
 		const batchSize: number = Math.round(freememInMB / 2000);
 
@@ -215,11 +222,12 @@ export default class ImageSetGenerator {
 		);
 		/* Transform img tags to picture tags*/
 		const rwBatchSize: number = batchSize * 5;
-		await this.#imgTagTransformer.transform(
-			imagesMetaofHtmls,
-			destinationBase,
-			rwBatchSize,
-		);
+		await this.#imgTagTransformer.transform({
+			htmlsRecords: imagesMetaofHtmls,
+			variableImgFormat: variableImgFormat,
+			destinationBase: destinationBase,
+			batchSize: rwBatchSize,
+		});
 
 		console.log(`[${currentTime()}] ===> ✅ Transformation completed.`);
 	}

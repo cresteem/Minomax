@@ -12,6 +12,7 @@ import {
 import {
 	ConfigurationOptions,
 	ImageTagsRecord,
+	ImageWorkerOutputTypes,
 	ImgTagTransResponse,
 	PictureTagMakerResponse,
 	SrcRecordType,
@@ -82,6 +83,7 @@ export default class ImgTagTransformer {
 
 	#_pictureTagMaker(
 		htmlsTagRecords: ImageTagsRecord[],
+		variableImgFormat: ImageWorkerOutputTypes | false,
 	): Record<string, PictureTagMakerResponse[]> {
 		/* Results holder */
 		//Record<Htmlfilename,Records>
@@ -133,20 +135,31 @@ export default class ImgTagTransformer {
 					pictureTag = "<picture>";
 
 					mediaTargets.forEach((mediaTarget, index) => {
+						const imagePath =
+							imageSetsPaths[imageUniqueKey][mediaTargetKeys[index]];
+
 						const relativeSrcPath: string = relative(
 							dirname(htmlTagRecord.htmlFile),
-							imageSetsPaths[imageUniqueKey][mediaTargetKeys[index]],
+							`${join(
+								dirname(imagePath),
+								basename(imagePath, extname(imagePath)),
+							)}${"." + variableImgFormat || extname(imagePath)}`,
 						);
 
 						pictureTag += `<source media="(max-width:${mediaTarget}px)" srcset="${relativeSrcPath}">`;
 					});
 
 					//setting second level image as fallback "2x"
-					const fallbackSrcPath: string = relative(
-						dirname(htmlTagRecord.htmlFile),
+					const imagePath =
 						imageSetsPaths[imageUniqueKey][
 							mediaTargetKeys[mediaTargetKeys.length - 2]
-						],
+						];
+					const fallbackSrcPath: string = relative(
+						dirname(htmlTagRecord.htmlFile),
+						`${join(
+							dirname(imagePath),
+							basename(imagePath, extname(imagePath)),
+						)}${"." + variableImgFormat || extname(imagePath)}`,
 					);
 
 					pictureTag += `<img src="${fallbackSrcPath}" `;
@@ -219,10 +232,11 @@ export default class ImgTagTransformer {
 	async #_imgTagTransformer(
 		htmlsTagRecords: ImageTagsRecord[],
 		batchSize: number = 5,
+		variableImgFormat: ImageWorkerOutputTypes | false,
 	): Promise<ImgTagTransResponse[]> {
 		//making picture tag for img tag
 		const pictureTags: Record<string, PictureTagMakerResponse[]> =
-			this.#_pictureTagMaker(htmlsTagRecords);
+			this.#_pictureTagMaker(htmlsTagRecords, variableImgFormat);
 
 		const htmlFiles: string[] = Object.keys(pictureTags);
 
@@ -283,13 +297,23 @@ export default class ImgTagTransformer {
 		return transformedHtmls;
 	}
 
-	async transform(
-		htmlsRecords: ImageTagsRecord[],
-		destinationBase: string = "dist",
-		batchSize: number = 10 /* Read and write only */,
-	): Promise<void> {
+	async transform({
+		htmlsRecords,
+		variableImgFormat,
+		destinationBase = "dist",
+		batchSize = 10 /* Read and write only */,
+	}: {
+		htmlsRecords: ImageTagsRecord[];
+		variableImgFormat: ImageWorkerOutputTypes | false;
+		destinationBase: string;
+		batchSize: number;
+	}): Promise<void> {
 		const transformedHtmls: Awaited<ImgTagTransResponse[]> =
-			await this.#_imgTagTransformer(htmlsRecords, batchSize);
+			await this.#_imgTagTransformer(
+				htmlsRecords,
+				batchSize,
+				variableImgFormat,
+			);
 
 		const promises: (() => Promise<void>)[] = transformedHtmls.map(
 			(transformedHtml) => (): Promise<void> =>

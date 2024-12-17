@@ -66,13 +66,13 @@ export default class Minifier {
 
 		switch (fileType) {
 			case "css":
-				minifyFunction = this.#_minifyCss;
+				minifyFunction = this.#_minifyCss.bind(this);
 				break;
 			case "html":
-				minifyFunction = this.#_minifyHtml;
+				minifyFunction = this.#_minifyHtml.bind(this);
 				break;
 			case "js":
-				minifyFunction = this.#_minifyJS;
+				minifyFunction = this.#_minifyJS.bind(this);
 				break;
 		}
 
