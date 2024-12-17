@@ -60,6 +60,6 @@ export default class WebDocsWorker {
 			await minifier.minify(webdocs, extension.slice(1) as any, batchSize);
 		}
 
-		console.log(`\n[${currentTime()}] +++> ✅ Web docs were minified.`);
+		console.log(`[${currentTime()}] +++> ✅ Web docs were minified.`);
 	}
 }

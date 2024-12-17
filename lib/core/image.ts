@@ -273,9 +273,13 @@ export default class ImageWorker {
 			});
 		});
 
-		console.log(`Number of images: ${imagePaths.length}`);
-
 		console.log(`[${currentTime()}] +++> ⏰ Image Encoding Started`);
+
+		console.log(
+			`\nNumber of ${
+				targetFormat === "svg" ? "SVG" : "Rasterized"
+			} images: ${imagePaths.length}`,
+		);
 
 		if (targetFormat === "svg") {
 			try {

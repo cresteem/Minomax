@@ -1,4 +1,5 @@
 import { CheerioAPI, load } from "cheerio";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import {
 	basename,
@@ -190,7 +191,14 @@ export default class ImgTagTransformer {
 		htmlFilePath: string,
 		htmlContent: string,
 		variableImgFormat: ImageWorkerOutputTypes | false,
-	): string {
+	): {
+		thumbnails: string[];
+		availableVideos: string[];
+		updatedHtml: string;
+	} {
+		const availableVideos: string[] = [];
+		const videoThumbnails: string[] = [];
+
 		// Load the HTML content into Cheerio
 		const htmlTree: CheerioAPI = load(htmlContent);
 
@@ -209,19 +217,24 @@ export default class ImgTagTransformer {
 				continue;
 			} else {
 				videoUrl = resolve(join(dirname(htmlFilePath), videoUrl));
+				if (!existsSync(videoUrl)) {
+					continue;
+				}
 			}
 
-			const thumbnailUrl: string = join(
+			availableVideos.push(videoUrl);
+
+			const thumbnailUrlWithNoExt: string = join(
 				dirname(videoUrl),
 				"thumbnails",
-				basename(videoUrl, extname(videoUrl)).concat(
-					`.${variableImgFormat}` || ".jpg",
-				),
+				basename(videoUrl, extname(videoUrl)),
 			);
+
+			videoThumbnails.push(resolve(thumbnailUrlWithNoExt.concat(".jpg")));
 
 			const relativeSrcPath: string = relative(
 				dirname(htmlFilePath),
-				thumbnailUrl,
+				thumbnailUrlWithNoExt.concat(`.${variableImgFormat}` || ".jpg"),
 			).replaceAll(sep, "/");
 
 			htmlTree(videoTag).attr("poster", relativeSrcPath);
@@ -229,7 +242,11 @@ export default class ImgTagTransformer {
 
 		const htmlString: string = htmlTree.root().toString();
 
-		return htmlString;
+		return {
+			thumbnails: videoThumbnails,
+			availableVideos: availableVideos,
+			updatedHtml: htmlString,
+		};
 	}
 
 	async #_imgTagTransformer(
@@ -310,7 +327,10 @@ export default class ImgTagTransformer {
 		variableImgFormat: ImageWorkerOutputTypes | false;
 		destinationBase: string;
 		batchSize: number;
-	}): Promise<void> {
+	}): Promise<{ linkedVideos: string[]; videoThumbnails: string[] }> {
+		const linkedVideos: string[] = [];
+		const videoThumbnails: string[] = [];
+
 		const transformedHtmls: Awaited<ImgTagTransResponse[]> =
 			await this.#_imgTagTransformer(
 				htmlsRecords,
@@ -327,13 +347,17 @@ export default class ImgTagTransformer {
 					);
 
 					/* Adding poster for video  */
-					const result: string = this.#_videoThumbnailLinker(
-						transformedHtml.htmlFilePath,
-						transformedHtml.updatedContent,
-						variableImgFormat,
-					);
+					const { updatedHtml, availableVideos, thumbnails } =
+						this.#_videoThumbnailLinker(
+							transformedHtml.htmlFilePath,
+							transformedHtml.updatedContent,
+							variableImgFormat,
+						);
 
-					writeContent(result, newDestination)
+					linkedVideos.push(...availableVideos);
+					videoThumbnails.push(...thumbnails);
+
+					writeContent(updatedHtml, newDestination)
 						.then(resolve)
 						.catch((err) => {
 							reject(
@@ -361,5 +385,10 @@ export default class ImgTagTransformer {
 				});
 			}
 		}
+
+		return {
+			linkedVideos: linkedVideos,
+			videoThumbnails: videoThumbnails,
+		};
 	}
 }

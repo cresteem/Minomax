@@ -222,13 +222,29 @@ export default class ImageSetGenerator {
 		);
 		/* Transform img tags to picture tags*/
 		const rwBatchSize: number = batchSize * 5;
-		await this.#imgTagTransformer.transform({
-			htmlsRecords: imagesMetaofHtmls,
-			variableImgFormat: variableImgFormat,
-			destinationBase: destinationBase,
-			batchSize: rwBatchSize,
-		});
+		const { linkedVideos, videoThumbnails } =
+			await this.#imgTagTransformer.transform({
+				htmlsRecords: imagesMetaofHtmls,
+				variableImgFormat: variableImgFormat,
+				destinationBase: destinationBase,
+				batchSize: rwBatchSize,
+			});
 
 		console.log(`[${currentTime()}] ===> ✅ Transformation completed.`);
+
+		//available image and video list
+		return {
+			linkedVideos: linkedVideos,
+			videoThumbnails: videoThumbnails.map((thumbnailPath) =>
+				join(destinationBase, relative(process.cwd(), thumbnailPath)),
+			),
+			linkedImages: Object.values(imageSetPaths)
+				.map((set) => Object.values(set))
+				.flat()
+				.map((imagePath) =>
+					join(destinationBase, relative(process.cwd(), imagePath)),
+				)
+				.filter((imagePath) => existsSync(imagePath)),
+		};
 	}
 }
