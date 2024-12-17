@@ -84,8 +84,8 @@ export default class ImageSetGenerator {
 
 					if (isAvif) {
 						console.log(
-							"Avif image source is not supported to make image sets, so skipping it.\n->\t" +
-								baseImagePath,
+							"⭕ Skipping: AVIF is not supported in image set generator\n->\t" +
+								relative(process.cwd(), baseImagePath),
 						);
 
 						continue;
@@ -117,7 +117,9 @@ export default class ImageSetGenerator {
 					);
 				}
 			} else {
-				console.log(`${baseImagePath} not existing so skipping it.`);
+				console.log(
+					`⭕ Skipping: ${relative(process.cwd(), baseImagePath)}`,
+				);
 			}
 		}
 

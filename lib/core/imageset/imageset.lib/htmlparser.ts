@@ -33,7 +33,11 @@ export default class HTMLParser {
 		// extracting src
 		let imageLink: string = htmlTree(tag).attr("src") || "";
 		if (!imageLink) {
-			terminate({ reason: "Image link not found in this img tag " + tag });
+			terminate({
+				reason: `Image link not found in this img tag at file: ${htmlfile} : ${htmlTree(
+					tag,
+				).html()} `,
+			});
 		} else {
 			imageLink = join(dirname(htmlfile), imageLink);
 		}
@@ -123,7 +127,7 @@ export default class HTMLParser {
 					const htmlTree: CheerioAPI = load(htmlContent);
 
 					//find img tags
-					const imgTags: any = htmlTree("img");
+					const imgTags: any = htmlTree("img")?.toArray() || false;
 
 					if (!imgTags) {
 						//close if it's no img tag

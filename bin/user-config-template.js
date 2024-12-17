@@ -127,6 +127,7 @@ const config = {
 			removeStyleLinkTypeAttributes: true,
 			removeTagWhitespace: true,
 		},
+		lookupPatterns: ["**/*.css", "**/*.js", "**/*.html", "**/*.htm"],
 	},
 	imageSetConfigurations: {
 		screenSizes: {
@@ -139,6 +140,24 @@ const config = {
 		upscaleLevel: "level2",
 	},
 	destPath: "./dist",
+	removeOld: true,
+	ignorePatterns: ["node_modules/**"],
+	imagePatterns: [
+		"**/*.png",
+		"**/*.jpg",
+		"**/*.jpeg",
+		"**/*.bmp",
+		"**/*.webp",
+	],
+	videoLookupPatterns: [
+		"**/*.mp4",
+		"**/*.webm",
+		"**/*.mkv",
+		"**/*.wmv",
+		"**/*.flv",
+		"**/*.avi",
+		"**/*.mov",
+	],
 };
 
 exports.default = config;

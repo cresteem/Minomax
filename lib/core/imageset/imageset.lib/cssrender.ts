@@ -1,5 +1,6 @@
 import puppeteer, { type Browser, Page } from "puppeteer";
 import { ImageSizeResponse } from "../../../types";
+import { terminate } from "../../../utils";
 
 async function _closeBrowser(browser: Browser) {
 	if (browser) {
@@ -15,10 +16,12 @@ async function _closeBrowser(browser: Browser) {
 
 function _getImageSize({
 	page,
+	screenKey,
 	screenWidth,
 	selector,
 }: {
 	page: Page;
+	screenKey: string;
 	screenWidth: number;
 	selector: string;
 }): Promise<ImageSizeResponse> {
@@ -38,7 +41,11 @@ function _getImageSize({
 				};
 			}, selector);
 
-			resolve({ screenWidth: imageSize });
+			const result: Record<string, { width: number; height?: number }> =
+				{};
+			result[screenKey] = imageSize;
+
+			resolve(result);
 		} catch (err) {
 			reject(`Error calculating image size, at ${selector}\n${err}`);
 		}
@@ -61,7 +68,11 @@ export function getImageSizes(
 				headless: true,
 				args: ["--start-maximized"],
 			});
+		} catch (err) {
+			terminate({ reason: `Failed to launch browser, ${err}` });
+		}
 
+		try {
 			const page = await browser.newPage();
 
 			await page.goto(htmlPath, { timeout: 60000 });
@@ -74,6 +85,7 @@ export function getImageSizes(
 				(screenKey: string) => (): Promise<ImageSizeResponse> =>
 					_getImageSize({
 						page: page,
+						screenKey: screenKey,
 						screenWidth: screenSizes[screenKey],
 						selector: selector,
 					}),

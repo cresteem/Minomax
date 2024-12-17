@@ -27,13 +27,16 @@
 		"noImplicitOverride": false,
 		"noUnusedParameters": true,
 		"noUncheckedIndexedAccess": false,
-		"sourceMap": false,
+		"sourceMap": true,
 		"removeComments": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"declaration": true,
+		"declarationDir": "dist/types"
 	},
 	"exclude": [
 		"node_modules",
 		"test",
-		"jest.config.ts"
+		"jest.config.ts",
+		"dist"
 	]
 }

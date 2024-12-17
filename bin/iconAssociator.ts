@@ -1,7 +1,7 @@
-import { readFile, writeFile } from "fs/promises";
-import { terminate } from "lib/utils";
 import { copyFileSync, mkdirSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { terminate } from "../lib/utils";
 
 const defaultConfigPaths: Record<string, string> = {
 	win32: `${process.env.APPDATA}/Code/User/settings.json`,

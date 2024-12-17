@@ -6,7 +6,7 @@ import { terminate } from "../lib/utils";
 import iconAssociator from "./iconAssociator";
 import initConfig from "./initConfig";
 
-import Minomax from "../minomax";
+import { Minomax } from "../minomax";
 const {
 	compressImages,
 	compressVideos,

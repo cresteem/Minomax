@@ -13,7 +13,7 @@ import {
 } from "./lib/types";
 import { copyFiles } from "./lib/utils";
 
-export default class Minomax {
+export class Minomax {
 	configurations: ConfigurationOptions;
 	#videoWorker: VideoWorker;
 	#imageWorker: ImageWorker;
