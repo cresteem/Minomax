@@ -136,6 +136,8 @@ export default class RasterisedImageSetGenerator {
 								`Error while generating a image of ${targetWidth}, at ${baseImagePath}\n${err}`,
 							);
 						});
+				} else {
+					resolve();
 				}
 			}
 		});

@@ -1,4 +1,4 @@
-import { load } from "cheerio";
+import { load } from "cheerio/slim";
 import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";

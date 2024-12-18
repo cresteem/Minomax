@@ -53,7 +53,7 @@ function _getImageSize({
 }
 
 export function getImageSizes(
-	selectors: { id: string; classes: string[] },
+	selectors: { id: string | undefined; classes: string[] },
 	htmlPath: string,
 	screenSizes: Record<string, number>,
 ): Promise<ImageSizeResponse> {

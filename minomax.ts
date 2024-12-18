@@ -169,7 +169,7 @@ export class Minomax {
 				destinationBasePath,
 			);
 		} catch (err) {
-			console.log(err);
+			console.error("❌ Unexpected error while encoding images", err);
 			process.exit(1);
 		}
 	}
@@ -209,7 +209,7 @@ export class Minomax {
 				destinationBasePath,
 			);
 		} catch (err) {
-			console.log(err);
+			console.error("❌ Unexpected error while encoding videos", err);
 			process.exit(1);
 		}
 	}
@@ -239,7 +239,7 @@ export class Minomax {
 				noDirPatterns: ignorePatterns,
 			});
 		} catch (err) {
-			console.log(err);
+			console.error("❌ Unexpected error while minifying WebDocs.", err);
 			process.exit(1);
 		}
 	}
@@ -267,10 +267,14 @@ export class Minomax {
 				variableImgFormat: false,
 			});
 		} catch (err) {
-			console.log(err);
+			console.error("❌ Unexpected error while generating image set", err);
 			process.exit(1);
 		}
 	}
 }
 
 export type minomaxOptions = ConfigurationOptions;
+
+process.on("uncaughtException", (err) => {
+	terminate({ reason: "Unhandled exception:\t" + err });
+});

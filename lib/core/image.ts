@@ -273,10 +273,10 @@ export default class ImageWorker {
 			});
 		});
 
-		console.log(`[${currentTime()}] +++> ⏰ Image Encoding Started`);
+		console.log(`\n[${currentTime()}] +++> ⏰ Image Encoding Started`);
 
 		console.log(
-			`\nNumber of ${
+			`Number of ${
 				targetFormat === "svg" ? "SVG" : "Rasterized"
 			} images: ${imagePaths.length}`,
 		);

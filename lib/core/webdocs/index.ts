@@ -33,7 +33,7 @@ export default class WebDocsWorker {
 		noDirPatterns.push(...["./node_modules/**", destinationBase + "/**"]);
 
 		console.log(
-			`\n[${currentTime()}] +++> ⏰ Web Docs uglify process started.`,
+			`\n[${currentTime()}] +++> ⏰ Web Docs minification started.`,
 		);
 
 		const selectorsMangler = new SelectorsMangler();

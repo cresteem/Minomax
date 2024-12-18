@@ -1,4 +1,4 @@
-import { CheerioAPI, load } from "cheerio";
+import { CheerioAPI, load } from "cheerio/slim";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import {
@@ -123,7 +123,7 @@ export default class ImgTagTransformer {
 
 					//setting attributes
 					for (const [attrname, attrValue] of Object.entries(
-						srcRecord.attributes,
+						srcRecord.attributes || {},
 					)) {
 						pictureTag += ` ${attrname}${
 							attrValue ? `="${attrValue}"` : ""
@@ -167,7 +167,7 @@ export default class ImgTagTransformer {
 
 					//setting attributes
 					for (const [attrname, attrValue] of Object.entries(
-						srcRecord.attributes,
+						srcRecord.attributes || {},
 					)) {
 						pictureTag += ` ${attrname}${
 							attrValue ? `="${attrValue}"` : ""
@@ -265,10 +265,11 @@ export default class ImgTagTransformer {
 				new Promise((resolve, reject) => {
 					readFile(htmlFile, { encoding: "utf-8" })
 						.then((htmlContent: string) => {
-							let updatedContent: string = htmlContent;
+							let updatedContent: string = load(htmlContent).html();
 
 							pictureTags[htmlFile].forEach((pictureTagMeta) => {
 								//replace tags
+
 								updatedContent = updatedContent.replace(
 									pictureTagMeta.imgTagReference,
 									pictureTagMeta.newTag,

@@ -186,19 +186,19 @@ export interface ImageTagsRecord {
 export interface SrcRecordType {
 	imgTagReference: string;
 	imageLink: string;
-	id: string;
+	id: string | undefined;
 	classes: string[];
 	imageSizes: ImageSizeResponse;
-	attributes: ImageAttributes;
+	attributes: Record<string, string> | undefined;
 }
 
-export interface ImageAttributes {
+/* export interface ImageAttributes {
 	id: string;
 	class: string;
 	alt: string;
 	loading: string;
 	style: string;
-}
+} */
 
 export interface PictureTagMakerResponse {
 	imgTagReference: string;

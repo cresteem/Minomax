@@ -7,17 +7,10 @@ import iconAssociator from "./iconAssociator";
 import initConfig from "./initConfig";
 
 import { Minomax } from "../minomax";
-const {
-	compressImages,
-	compressVideos,
-	generateImageSets,
-	minifyWebdoc,
-	minomax,
-	configurations,
-} = new Minomax();
+const minomax = new Minomax();
 
 const program = new Command();
-const { destPath } = configurations;
+const { destPath } = minomax.configurations;
 
 // Minomax command
 program
@@ -42,7 +35,7 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await minomax({
+		await minomax.minomax({
 			imageWorkerParams: { targetFormat: options.format },
 			videoWorkerParams: {
 				codecType: options.codec,
@@ -76,7 +69,7 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await compressImages({
+		await minomax.compressImages({
 			pathPatterns: options.patterns,
 			targetFormat: options.format,
 			destinationBasePath: options.dest,
@@ -108,7 +101,7 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await compressVideos({
+		await minomax.compressVideos({
 			pathPatterns: options.patterns,
 			codecType: options.codec,
 			encodeLevel: options.encode,
@@ -140,7 +133,7 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await minifyWebdoc({
+		await minomax.minifyWebdoc({
 			pathPatterns: options.patterns,
 			destinationBasePath: options.dest,
 			fileSearchBasePath: options.searchBase,
@@ -166,7 +159,7 @@ program
 		[],
 	)
 	.action(async (options) => {
-		await generateImageSets({
+		await minomax.generateImageSets({
 			pathPatterns: options.patterns,
 			destinationBasePath: options.dest,
 			ignorePatterns: options.ignore,

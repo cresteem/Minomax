@@ -1,11 +1,10 @@
-import { Cheerio, CheerioAPI, load } from "cheerio";
+import { Cheerio, CheerioAPI, load } from "cheerio/slim";
 
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
 import {
 	ConfigurationOptions,
-	ImageAttributes,
 	ImageTagsRecord,
 	ScreenSizesRecordType,
 	SrcRecordType,
@@ -43,8 +42,8 @@ export default class HTMLParser {
 		}
 
 		// extracting id
-		let id: string = htmlTree(tag).attr("id") || "";
-		id = id ? `#${id}` : "";
+		let id: string | undefined = htmlTree(tag).attr("id") || "";
+		id = id ? `#${id}` : undefined;
 
 		// extracting classes
 		const classes: string = htmlTree(tag).attr("class") || "";
@@ -52,19 +51,19 @@ export default class HTMLParser {
 			? classes.split(/\s+/).map((classname) => `.${classname}`)
 			: [];
 
-		//require attributes for (<picture>)imagesets of per img tag
+		/* 	//require attributes for (<picture>)imagesets of per img tag
 		const attributes: ImageAttributes = {
 			id: id.slice(1),
 			class: classes,
 			alt: htmlTree(tag).attr("alt") || "",
 			loading: htmlTree(tag).attr("loading") || "",
 			style: htmlTree(tag).attr("style") || "",
-		};
+		}; */
 
 		const imgTagReference: string = htmlTree(tag).toString();
 
 		return new Promise((resolve, reject) => {
-			const selectors: { id: string; classes: string[] } = {
+			const selectors: { id: string | undefined; classes: string[] } = {
 				id: id,
 				classes: classList,
 			};
@@ -77,7 +76,7 @@ export default class HTMLParser {
 						id: id,
 						classes: classList,
 						imageSizes: imageSizes,
-						attributes: attributes,
+						attributes: htmlTree(tag).attr(),
 					};
 
 					resolve(imageRecord);
