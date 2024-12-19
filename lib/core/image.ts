@@ -5,6 +5,7 @@ import { basename, dirname, extname, join, relative } from "node:path";
 import { ImagePool } from "remige";
 import { optimize } from "svgo";
 
+import { Presets, SingleBar } from "cli-progress";
 import {
 	AvifEncodeOptions,
 	ConfigurationOptions,
@@ -52,6 +53,16 @@ class _SVGWorker {
 		svgImagePaths: string[],
 		destinationBasePath: string,
 	): Promise<void> {
+		const progressBar = new SingleBar(
+			{
+				format:
+					"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
+				hideCursor: true,
+			},
+			Presets.shades_classic,
+		);
+		progressBar.start(svgImagePaths.length, 0);
+
 		const outputPromises: (() => Promise<void>)[] = svgImagePaths.map(
 			(svgPath: string) => () =>
 				new Promise<void>((resolve, reject) => {
@@ -74,27 +85,32 @@ class _SVGWorker {
 									encoding: "utf8",
 								})
 									.then(() => {
+										progressBar.increment();
 										resolve();
 									})
 									.catch((error: Error) => {
+										progressBar.increment();
 										reject(
 											`\nError writing svg file ${outputPath}\n` + error,
 										);
 									});
 							} catch (err: any) {
+								progressBar.increment();
 								const logMessage: string = `${svgPath} => ${err}`;
 								logWriter(logMessage);
-								reject();
+								reject(err);
 							}
 						})
 						.catch((error: Error) => {
-							reject(`\nError: ${basename(svgPath)}\n` + error);
+							progressBar.increment();
+							reject(`\nError Reading ${basename(svgPath)}\n` + error);
 						});
 				}),
 		);
 
 		try {
 			await this.#_svgBatchHandler(outputPromises);
+			progressBar.stop();
 		} catch (err: any) {
 			terminate({ reason: "Error while batch processing\n" + err });
 		}
@@ -163,6 +179,16 @@ class _RasterizedImageWorker {
 			| WebpEncodeOptions,
 		destinationBasePath: string,
 	): Promise<void> {
+		const progressBar = new SingleBar(
+			{
+				format:
+					"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
+				hideCursor: true,
+			},
+			Presets.shades_classic,
+		);
+		progressBar.start(imagePaths.length, 0);
+
 		//number of concurrent process.
 		/* 70 percentage of core count If there is no cpu allocation in Settings */
 		const threadCount: number =
@@ -172,11 +198,11 @@ class _RasterizedImageWorker {
 
 		/* Ingest images in pool */
 		const imagesRecords: {
-			encodeResult: Record<string, any>;
+			ingestedImage: Record<string, any>;
 			filePath: string;
 		}[] = imagePaths.map((filePath: string) => {
 			return {
-				encodeResult: pool.ingestImage(readFileSync(filePath)),
+				ingestedImage: pool.ingestImage(readFileSync(filePath)),
 				filePath: filePath,
 			};
 		});
@@ -185,24 +211,27 @@ class _RasterizedImageWorker {
 		const outputPromises: Promise<void>[] = imagesRecords.map(
 			(imagesRecord): Promise<void> =>
 				new Promise((resolve, reject) => {
-					let { encodeResult, filePath } = imagesRecord;
+					let { ingestedImage, filePath } = imagesRecord;
 
-					encodeResult
+					ingestedImage
 						.encode(encodeOptions)
 						.then(() => {
 							this.#_writeBinaryImage(
-								encodeResult,
+								ingestedImage,
 								filePath,
 								destinationBasePath,
 							)
 								.then(() => {
+									progressBar.increment();
 									resolve();
 								})
 								.catch((err: Error) => {
+									progressBar.increment();
 									reject("Error writing binary image data\n " + err);
 								});
 						})
 						.catch((err: Error) => {
+							progressBar.increment();
 							reject("Error encoding images\n" + err);
 						});
 				}),
@@ -220,8 +249,10 @@ class _RasterizedImageWorker {
 						.catch((err: Error) => {
 							console.log("Failed to closing pool\n", err);
 						});
+					progressBar.stop();
 				})
 				.catch((err: Error) => {
+					progressBar.stop();
 					//closing image pool
 					pool.close().catch((err: Error) => {
 						console.log("Failed to closing pool\n", err);
@@ -278,7 +309,7 @@ export default class ImageWorker {
 		console.log(
 			`Number of ${
 				targetFormat === "svg" ? "SVG" : "Rasterized"
-			} images: ${imagePaths.length}`,
+			} images: ${imagePaths.length}\n`,
 		);
 
 		if (targetFormat === "svg") {
@@ -289,7 +320,7 @@ export default class ImageWorker {
 				}).optimise(imagePaths, destinationBasePath);
 
 				console.log(
-					`[${currentTime()}] ===> ✅ Images are optimised with SVG format.`,
+					`\n[${currentTime()}] ===> ✅ Images are optimised with SVG format.`,
 				);
 			} catch (err) {
 				terminate({ reason: "❌ SVG optimization failed" + err });
@@ -321,7 +352,7 @@ export default class ImageWorker {
 				}).encode(imagePaths, encodeOptions as any, destinationBasePath);
 
 				console.log(
-					`[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
+					`\n[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
 				);
 			} catch (error) {
 				terminate({

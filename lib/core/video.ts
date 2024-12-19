@@ -1,4 +1,4 @@
-import { encodeAll } from "handstop";
+import { encode as encodeVideo } from "handstop";
 import { freemem } from "node:os";
 import { basename, dirname, extname, join, relative } from "node:path";
 
@@ -6,6 +6,7 @@ import ffmpegIns from "@ffmpeg-installer/ffmpeg";
 import ffprobeIns from "@ffprobe-installer/ffprobe";
 import ffmpeg from "fluent-ffmpeg";
 
+import { Presets, SingleBar } from "cli-progress";
 import { ConfigurationOptions } from "../../lib/types";
 import { currentTime, makeDirf, terminate } from "../utils";
 
@@ -71,6 +72,23 @@ export default class VideoWorker {
 		});
 	}
 
+	async #_encodeBatchHandler(
+		outputPromises: (() => Promise<void>)[],
+		batchSize: number,
+	): Promise<void> {
+		const promiseBatches: (() => Promise<void>)[][] = [];
+
+		for (let i = 0; i < outputPromises.length; i += batchSize) {
+			promiseBatches.push(outputPromises.slice(i, i + batchSize));
+		}
+
+		for (const batch of promiseBatches) {
+			const activatedBatch: Promise<void>[] = batch.map((func) => func());
+
+			await Promise.all(activatedBatch);
+		}
+	}
+
 	async encode(
 		videoPaths: string[],
 		codecType: "wav1" | "mav1" | "mx265" = "wav1",
@@ -86,21 +104,47 @@ export default class VideoWorker {
 			console.log(`\n[${currentTime()}] +++> ⏰ Video Encoding started.`);
 
 			console.log(`Number of videos in queue: ${videoPaths.length}`);
-			console.log(`Number of encodes at a time: ${batchSize}`);
+			console.log(`Number of encodes at a time: ${batchSize}\n`);
 
-			const { success } = await encodeAll(
-				videoPaths,
-				basepath,
-				codecType,
-				encodeLevel,
-				batchSize,
+			const progressBar = new SingleBar(
+				{
+					format:
+						"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
+					hideCursor: true,
+				},
+				Presets.shades_classic,
+			);
+			progressBar.start(videoPaths.length, 0);
+
+			const promises = videoPaths.map(
+				(videoPath) => () =>
+					new Promise<void>((resolve, reject) => {
+						const outputPath = join(
+							basepath,
+							relative(process.cwd(), videoPath),
+						);
+						encodeVideo(videoPath, outputPath, codecType, encodeLevel)
+							.then(() => {
+								progressBar.increment();
+								resolve();
+							})
+							.catch((err) => {
+								progressBar.increment();
+								reject("Error while encoding video.\n" + err);
+							});
+					}),
 			);
 
-			if (!success) {
-				throw new Error("Passive error in shell");
+			try {
+				await this.#_encodeBatchHandler(promises, batchSize);
+				progressBar.stop();
+			} catch (err) {
+				terminate({
+					reason: "Error in batch process of video encoding\n" + err,
+				});
 			}
 
-			console.log(`[${currentTime()}] ===> ✅ Videos were encoded.`);
+			console.log(`\n[${currentTime()}] ===> ✅ Videos were encoded.`);
 
 			console.log(
 				`\n[${currentTime()}] +++> ⏰ Thumbnail generation started.`,
