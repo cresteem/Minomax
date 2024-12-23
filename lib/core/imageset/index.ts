@@ -11,7 +11,13 @@ import {
 	ImageWorkerOutputTypes,
 	SrcRecordType,
 } from "../../types";
-import { currentTime, terminate } from "../../utils";
+import {
+	batchProcess,
+	currentTime,
+	initProgressBar,
+	logWriter,
+	terminate,
+} from "../../utils";
 import RasterisedImageSetGenerator from "./imageset.lib/generators/nonsvg";
 import svgGen from "./imageset.lib/generators/svg";
 import HTMLParser from "./imageset.lib/htmlparser";
@@ -70,6 +76,7 @@ export default class ImageSetGenerator {
 	#_imageGenProcAssigner(
 		destinationBase: string,
 		imageSetRecords: ImageSetGenRecord[],
+		progressBar: any,
 	): (() => Promise<void>)[] {
 		const promisedProcs: (() => Promise<void>)[] = [];
 
@@ -84,7 +91,7 @@ export default class ImageSetGenerator {
 					const isAvif: boolean = extname(baseImagePath) === ".avif";
 
 					if (isAvif) {
-						console.log(
+						logWriter(
 							"⭕ Skipping: AVIF is not supported in image set generator\n->\t" +
 								relative(process.cwd(), baseImagePath),
 						);
@@ -97,12 +104,18 @@ export default class ImageSetGenerator {
 							);
 
 						const imageSetGenPromises = Object.values(record.imageSet).map(
-							(meta) => () =>
-								rasterisedImageSetGenerator.main({
-									baseImagePath,
-									targetWidth: meta.width,
-									destinationPath: meta.path,
-								}),
+							(meta) => async () => {
+								try {
+									await rasterisedImageSetGenerator.main({
+										baseImagePath,
+										targetWidth: meta.width,
+										destinationPath: meta.path,
+									});
+									progressBar.increment();
+								} catch (err) {
+									terminate({ reason: `${err}` });
+								}
+							},
 						);
 
 						promisedProcs.push(...imageSetGenPromises);
@@ -113,44 +126,25 @@ export default class ImageSetGenerator {
 						relative(process.cwd(), record.imageSet["1X"].path),
 					);
 
-					promisedProcs.push(() =>
-						svgGen({ baseImagePath, destinationPath }),
-					);
+					promisedProcs.push(async () => {
+						try {
+							await svgGen({ baseImagePath, destinationPath });
+							progressBar.increment();
+						} catch (err) {
+							terminate({ reason: `${err}` });
+						}
+					});
 				}
 			} else {
-				console.log(
+				logWriter(
 					`⭕ Skipping: ${relative(process.cwd(), baseImagePath)}`,
 				);
 			}
 		}
 
+		progressBar.start(promisedProcs.length, 0);
+
 		return promisedProcs;
-	}
-
-	async #_batchProcess(
-		promisedProcs: (() => Promise<void>)[],
-		batchSize: number,
-	): Promise<void> {
-		/* Batching promises */
-		const generatorBatchSize: number = batchSize * 4;
-		const promiseBatches: (() => Promise<void>)[][] = [];
-
-		for (let i = 0; i < promisedProcs.length; i += generatorBatchSize) {
-			promiseBatches.push(promisedProcs.slice(i, i + generatorBatchSize));
-		}
-
-		/* Activating batches */
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			try {
-				await Promise.all(activatedBatch);
-			} catch (err) {
-				terminate({
-					reason: "Batch process failed at image generator\t" + err,
-				});
-			}
-		}
 	}
 
 	/*
@@ -179,8 +173,8 @@ export default class ImageSetGenerator {
 		console.log(
 			`\n[${currentTime()}] +++> ⏰ Imageset generation started.`,
 		);
-		console.log(`Number of HTML file in queue: ${htmlFiles.length}`);
-		console.log(`Number of HTML file at a time: ${batchSize}`);
+		console.log(`\nNumber of HTML file in queue: ${htmlFiles.length}`);
+		console.log(`Number of HTML file at a time: ${batchSize}\n`);
 
 		//making metadata for images that available in html
 		const imagesMetaofHtmls: ImageTagsRecord[] = await new HTMLParser(
@@ -198,23 +192,50 @@ export default class ImageSetGenerator {
 
 		for (const imagesMetaofHtml of imagesMetaofHtmls) {
 			for (const imgMeta of imagesMetaofHtml.imageRecords) {
-				const imageSetMeta = this.#_makeImageSetMeta(
+				const currentImageSetMeta = this.#_makeImageSetMeta(
 					imgMeta,
 					destinationBase,
 					imageSetPaths,
 				);
 
-				imageSetRecords.push(imageSetMeta);
+				const notDuplicate = !imageSetRecords.some(
+					(existingImgRec) =>
+						existingImgRec.baseImagePath ===
+						currentImageSetMeta.baseImagePath,
+				);
+
+				if (notDuplicate) {
+					imageSetRecords.push(currentImageSetMeta);
+				}
 			}
 		}
 
-		const promisedProcs: (() => Promise<void>)[] =
-			this.#_imageGenProcAssigner(destinationBase, imageSetRecords);
+		/* dumpRunTimeData({
+			data: imageSetRecords,
+			context: "Imageset Records",
+		}); */
 
-		await this.#_batchProcess(promisedProcs, batchSize);
+		const progressBar = initProgressBar({
+			context: "Generating Image Sets",
+		});
+
+		const promisedProcs: (() => Promise<void>)[] =
+			this.#_imageGenProcAssigner(
+				destinationBase,
+				imageSetRecords,
+				progressBar,
+			);
+
+		const generatorBatchSize = batchSize * 4;
+		await batchProcess({
+			promisedProcs: promisedProcs,
+			batchSize: generatorBatchSize,
+			context: "Image Generator",
+		});
+		progressBar.stop();
 
 		console.log(
-			`[${currentTime()}] ===> ✅ Imageset generation completed.`,
+			`\n[${currentTime()}] ===> ✅ Imageset generation completed.`,
 		);
 
 		console.log(

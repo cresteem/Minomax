@@ -5,7 +5,6 @@ import { basename, dirname, extname, join, relative } from "node:path";
 import { ImagePool } from "remige";
 import { optimize } from "svgo";
 
-import { Presets, SingleBar } from "cli-progress";
 import {
 	AvifEncodeOptions,
 	ConfigurationOptions,
@@ -14,7 +13,14 @@ import {
 	SvgOptions,
 	WebpEncodeOptions,
 } from "../types";
-import { currentTime, logWriter, makeDirf, terminate } from "../utils";
+import {
+	batchProcess,
+	currentTime,
+	initProgressBar,
+	logWriter,
+	makeDirf,
+	terminate,
+} from "../utils";
 
 class _SVGWorker {
 	#cpuAllocation: number;
@@ -34,33 +40,20 @@ class _SVGWorker {
 	async #_svgBatchHandler(
 		outputPromises: (() => Promise<void>)[],
 	): Promise<void> {
-		const promiseBatches: (() => Promise<void>)[][] = [];
-
 		const batchSize: number = this.#cpuAllocation * 4;
 
-		for (let i = 0; i < outputPromises.length; i += batchSize) {
-			promiseBatches.push(outputPromises.slice(i, i + batchSize));
-		}
-
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			await Promise.allSettled(activatedBatch);
-		}
+		await batchProcess({
+			promisedProcs: outputPromises,
+			batchSize: batchSize,
+			context: "SVG Optimizer",
+		});
 	}
 
 	async optimise(
 		svgImagePaths: string[],
 		destinationBasePath: string,
 	): Promise<void> {
-		const progressBar = new SingleBar(
-			{
-				format:
-					"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
-				hideCursor: true,
-			},
-			Presets.shades_classic,
-		);
+		const progressBar = initProgressBar({ context: "Optimizing SVG" });
 		progressBar.start(svgImagePaths.length, 0);
 
 		const outputPromises: (() => Promise<void>)[] = svgImagePaths.map(
@@ -179,14 +172,7 @@ class _RasterizedImageWorker {
 			| WebpEncodeOptions,
 		destinationBasePath: string,
 	): Promise<void> {
-		const progressBar = new SingleBar(
-			{
-				format:
-					"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
-				hideCursor: true,
-			},
-			Presets.shades_classic,
-		);
+		const progressBar = initProgressBar({ context: "Encoding Images" });
 		progressBar.start(imagePaths.length, 0);
 
 		//number of concurrent process.
@@ -298,13 +284,17 @@ export default class ImageWorker {
 		targetFormat: ImageWorkerOutputTypes,
 		destinationBasePath: string = this.#destPath,
 	): Promise<void> {
+		/* dumpRunTimeData({ data: imagePaths, context: "Image Paths" }); */
+
+		imagePaths = Array.from(new Set(imagePaths)); // keep unique image paths
+
 		process.on("SIGINT", () => {
 			terminate({
 				reason: "User interrupted encoding process. Shutting down....",
 			});
 		});
 
-		console.log(`\n[${currentTime()}] +++> ⏰ Image Encoding Started`);
+		console.log(`\n[${currentTime()}] +++> ⏰ Image Encoding Started\n`);
 
 		console.log(
 			`Number of ${

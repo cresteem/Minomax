@@ -121,7 +121,7 @@ export default class RasterisedImageSetGenerator {
 					.then(resolve)
 					.catch((err) => {
 						reject(
-							`Error while generating a image of ${targetWidth}, at ${baseImagePath}\n${err}`,
+							`\nError while generating a image of ${targetWidth},\nat ${baseImagePath}\n${err}`,
 						);
 					});
 			} else {
@@ -133,7 +133,7 @@ export default class RasterisedImageSetGenerator {
 						.then(resolve)
 						.catch((err) => {
 							reject(
-								`Error while generating a image of ${targetWidth}, at ${baseImagePath}\n${err}`,
+								`\nError while generating a image of ${targetWidth},\nat ${baseImagePath}\n${err}`,
 							);
 						});
 				} else {

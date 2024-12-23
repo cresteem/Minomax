@@ -39,6 +39,8 @@ export default class SelectorsExtractor {
 			absolute: true,
 		}).filter((path) => statSync(path).isFile());
 
+		/* dumpRunTimeData({ data: webDocFiles, context: "Webdoc Files" }); */
+
 		const cssFiles: string[] = webDocFiles.filter(
 			(file) => extname(file) === ".css",
 		);
@@ -56,7 +58,10 @@ export default class SelectorsExtractor {
 			terminate({ reason: "Error reading CSS file\n" + err });
 		}
 
-		return { cssContents: cssContents, webDocFiles: webDocFiles };
+		return {
+			cssContents: cssContents,
+			webDocFiles: webDocFiles,
+		};
 	}
 
 	//  to extract unique class names and IDs
@@ -139,10 +144,6 @@ export default class SelectorsExtractor {
 
 		uniqueClassNames = this.#_selectorsCleaner(uniqueClassNames);
 		uniqueIds = this.#_selectorsCleaner(uniqueIds);
-
-		console.log(
-			`Unique classes count = ${uniqueClassNames.length}\nUnique IDs count = ${uniqueIds.length}`,
-		);
 
 		return {
 			uniqueClassNames: uniqueClassNames,

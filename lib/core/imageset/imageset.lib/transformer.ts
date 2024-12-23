@@ -18,7 +18,7 @@ import {
 	PictureTagMakerResponse,
 	SrcRecordType,
 } from "../../../types";
-import { terminate, writeContent } from "../../../utils";
+import { batchProcess, writeContent } from "../../../utils";
 
 export default class ImgTagTransformer {
 	#screenSizes;
@@ -289,31 +289,11 @@ export default class ImgTagTransformer {
 				}),
 		);
 
-		const promiseBatches = [];
-
-		for (let i = 0; i < promises.length; i += batchSize) {
-			promiseBatches.push(promises.slice(i, i + batchSize));
-		}
-
-		const transformedHtmls: ImgTagTransResponse[] = [];
-
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<ImgTagTransResponse>[] = batch.map(
-				(func) => func(),
-			);
-
-			try {
-				const batchResult: ImgTagTransResponse[] = await Promise.all(
-					activatedBatch,
-				);
-
-				transformedHtmls.push(...batchResult);
-			} catch (err) {
-				terminate({
-					reason: `Batch process failed at sub-transformer\n${err}`,
-				});
-			}
-		}
+		const transformedHtmls: ImgTagTransResponse[] = await batchProcess({
+			promisedProcs: promises,
+			batchSize: batchSize,
+			context: "Image Tag Transformers",
+		});
 
 		return transformedHtmls;
 	}
@@ -368,24 +348,11 @@ export default class ImgTagTransformer {
 				}),
 		);
 
-		const promiseBatches: (() => Promise<void>)[][] = [];
-
-		/* Batching promises */
-		for (let i = 0; i < promises.length; i += batchSize) {
-			promiseBatches.push(promises.slice(i, i + batchSize));
-		}
-		/* Activating batches */
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			try {
-				await Promise.all(activatedBatch);
-			} catch (err) {
-				terminate({
-					reason: `Batch process failed at transformer\n${err}`,
-				});
-			}
-		}
+		await batchProcess({
+			promisedProcs: promises,
+			batchSize: batchSize,
+			context: "transform(), while writing outputs",
+		});
 
 		return {
 			linkedVideos: linkedVideos,

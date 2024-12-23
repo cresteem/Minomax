@@ -3,6 +3,7 @@ import { transform as lightningcss } from "lightningcss";
 
 import { readFile, writeFile } from "node:fs/promises";
 import { HtmlOptions } from "../../types";
+import { batchProcess, initProgressBar } from "../../utils";
 
 export default class Minifier {
 	#htmloptions: HtmlOptions;
@@ -76,6 +77,11 @@ export default class Minifier {
 				break;
 		}
 
+		const progressBar = initProgressBar({
+			context: fileType.toUpperCase(),
+		});
+		progressBar.start(mangledFiles.length, 0);
+
 		const minifierPromises: (() => Promise<void>)[] = mangledFiles.map(
 			(mangledFile: string) => (): Promise<void> =>
 				new Promise((resolve, reject) => {
@@ -86,20 +92,26 @@ export default class Minifier {
 									writeFile(mangledFile, minifiedContent, {
 										encoding: "utf8",
 									})
-										.then(resolve)
+										.then(() => {
+											progressBar.increment();
+											resolve();
+										})
 										.catch((err) => {
+											progressBar.increment();
 											reject(
 												`Error writing minified content, at:${mangledFile}\n${err}`,
 											);
 										});
 								})
 								.catch((err) => {
+									progressBar.increment();
 									reject(
 										`Error while minifying content, at:${mangledFile}\n${err}`,
 									);
 								});
 						})
 						.catch((err) => {
+							progressBar.increment();
 							reject(
 								`Error while reading content, at:${mangledFile}\n${err}`,
 							);
@@ -107,20 +119,12 @@ export default class Minifier {
 				}),
 		);
 
-		const promiseBatches: (() => Promise<void>)[][] = [];
-
-		for (let i = 0; i < minifierPromises.length; i += batchSize) {
-			promiseBatches.push(minifierPromises.slice(i, i + batchSize));
-		}
-
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			try {
-				await Promise.all(activatedBatch);
-			} catch (err) {
-				console.log(err);
-			}
-		}
+		await batchProcess({
+			promisedProcs: minifierPromises,
+			batchSize: batchSize,
+			context: "Web Docs Minifier",
+		});
+		progressBar.stop();
+		console.log("");
 	}
 }

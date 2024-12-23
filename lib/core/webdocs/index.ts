@@ -46,11 +46,9 @@ export default class WebDocsWorker {
 			);
 
 		const batchSize: number = calculateBatchSize({ perProcMem: 400 });
-
-		console.log(`Number of Web docs in queue: ${mangledFiles.length}`);
-		console.log(`Number of Web docs at a time: ${batchSize}`);
-
 		const minifier = new Minifier({ htmloptions: this.#htmloptions });
+
+		/* dumpRunTimeData({ data: mangledFiles, context: "Mangled files" }); */
 
 		const webDocExtensions: string[] = [".html", ".css", ".js"];
 		for (const extension of webDocExtensions) {

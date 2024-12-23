@@ -9,7 +9,7 @@ import {
 	ScreenSizesRecordType,
 	SrcRecordType,
 } from "../../../types";
-import { terminate } from "../../../utils";
+import { batchProcess, initProgressBar, terminate } from "../../../utils";
 import { getImageSizes } from "./cssrender";
 
 export default class HTMLParser {
@@ -151,34 +151,26 @@ export default class HTMLParser {
 		htmlFiles: string[],
 		batchSize: number = 2,
 	): Promise<ImageTagsRecord[]> {
+		const progressBar = initProgressBar({
+			context: "Extracting Image Records",
+		});
+
+		progressBar.start(htmlFiles.length, 0);
+
 		const htmlParsePromises: (() => Promise<ImageTagsRecord>)[] =
-			htmlFiles.map(
-				(htmlFile) => (): Promise<ImageTagsRecord> =>
-					this.#_extractImagesRecord(htmlFile),
-			);
+			htmlFiles.map((htmlFile) => async (): Promise<ImageTagsRecord> => {
+				const imageTagsRecord = await this.#_extractImagesRecord(htmlFile);
+				progressBar.increment();
+				return imageTagsRecord;
+			});
 
-		const recordTable: ImageTagsRecord[] = [];
-
-		const promiseBatches: (() => Promise<ImageTagsRecord>)[][] = [];
-
-		/* Batching promises */
-		for (let i = 0; i < htmlParsePromises.length; i += batchSize) {
-			promiseBatches.push(htmlParsePromises.slice(i, i + batchSize));
-		}
-
-		/* Activating batches */
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<ImageTagsRecord>[] = batch.map(
-				(func) => func(),
-			);
-
-			try {
-				const records = await Promise.all(activatedBatch);
-				recordTable.push(...records);
-			} catch (err) {
-				console.log(err);
-			}
-		}
+		const recordTable: ImageTagsRecord[] = await batchProcess({
+			promisedProcs: htmlParsePromises,
+			batchSize: batchSize,
+			context: "Image Records Extractor",
+		});
+		progressBar.stop();
+		console.log("");
 
 		return recordTable;
 	}

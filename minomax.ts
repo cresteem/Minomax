@@ -11,7 +11,12 @@ import {
 	ImageWorkerParamsMain,
 	VideoWorkerParamsMain,
 } from "./lib/types";
-import { copyFiles, terminate } from "./lib/utils";
+import {
+	copyFiles,
+	deleteOldLogs,
+	logNotifier,
+	terminate,
+} from "./lib/utils";
 
 export class Minomax {
 	configurations: ConfigurationOptions;
@@ -19,6 +24,14 @@ export class Minomax {
 	#imageWorker: ImageWorker;
 	#imageGenerator: ImageSetGenerator;
 	#webDocWorker: WebDocsWorker;
+
+	#beforeAll = () => {
+		deleteOldLogs();
+	};
+
+	#afterAll = () => {
+		logNotifier();
+	};
 
 	constructor() {
 		this.configurations = configurations();
@@ -43,6 +56,8 @@ export class Minomax {
 		webDocFilesPatterns?: string[];
 		removeOld?: boolean;
 	}) {
+		this.#beforeAll();
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
@@ -137,6 +152,8 @@ export class Minomax {
 			fileSearchBasePath: fileSearchBasePath,
 			noDirPatterns: ignorePatterns,
 		});
+
+		this.#afterAll();
 	}
 
 	async compressImages({
@@ -150,6 +167,8 @@ export class Minomax {
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
+		this.#beforeAll();
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
@@ -172,6 +191,8 @@ export class Minomax {
 			console.error("❌ Unexpected error while encoding images", err);
 			process.exit(1);
 		}
+
+		this.#afterAll();
 	}
 
 	async compressVideos({
@@ -187,6 +208,8 @@ export class Minomax {
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
+		this.#beforeAll();
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
@@ -212,6 +235,8 @@ export class Minomax {
 			console.error("❌ Unexpected error while encoding videos", err);
 			process.exit(1);
 		}
+
+		this.#afterAll();
 	}
 
 	async minifyWebdoc({
@@ -225,6 +250,8 @@ export class Minomax {
 		fileSearchBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
+		this.#beforeAll();
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
@@ -242,6 +269,8 @@ export class Minomax {
 			console.error("❌ Unexpected error while minifying WebDocs.", err);
 			process.exit(1);
 		}
+
+		this.#afterAll();
 	}
 
 	async generateImageSets({
@@ -253,6 +282,8 @@ export class Minomax {
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
+		this.#beforeAll();
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
@@ -270,6 +301,8 @@ export class Minomax {
 			console.error("❌ Unexpected error while generating image set", err);
 			process.exit(1);
 		}
+
+		this.#afterAll();
 	}
 }
 

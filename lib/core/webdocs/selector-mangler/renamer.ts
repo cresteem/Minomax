@@ -3,8 +3,14 @@ import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { NewNamesMakerResponse } from "../../../types";
-import { calculateBatchSize, writeContent } from "../../../utils";
-import SelectorExtractor from "./extracter";
+import {
+	batchProcess,
+	calculateBatchSize,
+	initProgressBar,
+	writeContent,
+} from "../../../utils";
+import SelectorsExtractor from "./extractor";
+const batchSize: number = calculateBatchSize({ perProcMem: 400 });
 
 class _SelectorsReplacer {
 	#encloser: string = "'"; //* {encloser} string -> enclosing quotes ( ' or " ) default= " .
@@ -242,7 +248,7 @@ export default class SelectorsMangler {
 	): NewNamesMakerResponse {
 		const {
 			availableSelectors: { uniqueIds, uniqueClassNames, webDocFiles },
-		} = new SelectorExtractor({
+		} = new SelectorsExtractor({
 			webDocFilesPatterns: webDocFilesPatterns,
 			noDirPatterns: noDirPatterns,
 			fileSearchBasePath: fileSearchBasePath,
@@ -275,6 +281,13 @@ export default class SelectorsMangler {
 			}
 		}
 
+		console.log(`\nNumber of Web docs in queue: ${webDocFiles.length}`);
+		console.log(`Number of Web docs at a time: ${batchSize}\n`);
+
+		console.log(
+			`Unique classes count = ${uniqueClassNames.length}\nUnique IDs count = ${uniqueIds.length}\n`,
+		);
+
 		return {
 			newSelectorsRecords: newSelectorsRecords,
 			webDocFiles: webDocFiles,
@@ -293,6 +306,8 @@ export default class SelectorsMangler {
 			noDirPatterns,
 			fileSearchBasePath,
 		);
+
+		const progressBar = initProgressBar({ context: "Renaming Selectors" });
 
 		const selectorsReplacer = new _SelectorsReplacer();
 
@@ -327,34 +342,33 @@ export default class SelectorsMangler {
 							);
 
 							writeContent(content, destinationFilePath)
-								.then(resolve)
+								.then(() => {
+									progressBar.increment();
+									resolve();
+								})
 								.catch((err: Error) => {
+									progressBar.increment();
 									reject(
 										`Error updating with renamed content at: ${file}\n${err}`,
 									);
 								});
 						})
-						.catch(reject);
+						.catch((err) => {
+							progressBar.increment();
+							reject(err);
+						});
 				}),
 		);
 
-		const batchSize: number = calculateBatchSize({ perProcMem: 400 });
+		progressBar.start(webDocFiles.length, 0);
 
-		const promiseBatches = [];
-
-		for (let i = 0; i < renamePromises.length; i += batchSize) {
-			promiseBatches.push(renamePromises.slice(i, i + batchSize));
-		}
-
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			try {
-				await Promise.all(activatedBatch);
-			} catch (err) {
-				console.log(err);
-			}
-		}
+		await batchProcess({
+			promisedProcs: renamePromises,
+			batchSize: batchSize,
+			context: "Selector Renamer",
+		});
+		progressBar.stop();
+		console.log("");
 
 		const destinatedFiles: string[] = webDocFiles.map((file) =>
 			join(destinationBase, relative(process.cwd(), file)),

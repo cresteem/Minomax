@@ -6,9 +6,14 @@ import ffmpegIns from "@ffmpeg-installer/ffmpeg";
 import ffprobeIns from "@ffprobe-installer/ffprobe";
 import ffmpeg from "fluent-ffmpeg";
 
-import { Presets, SingleBar } from "cli-progress";
 import { ConfigurationOptions } from "../../lib/types";
-import { currentTime, makeDirf, terminate } from "../utils";
+import {
+	batchProcess,
+	currentTime,
+	initProgressBar,
+	makeDirf,
+	terminate,
+} from "../utils";
 
 export default class VideoWorker {
 	#destPath: string;
@@ -72,23 +77,6 @@ export default class VideoWorker {
 		});
 	}
 
-	async #_encodeBatchHandler(
-		outputPromises: (() => Promise<void>)[],
-		batchSize: number,
-	): Promise<void> {
-		const promiseBatches: (() => Promise<void>)[][] = [];
-
-		for (let i = 0; i < outputPromises.length; i += batchSize) {
-			promiseBatches.push(outputPromises.slice(i, i + batchSize));
-		}
-
-		for (const batch of promiseBatches) {
-			const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-			await Promise.all(activatedBatch);
-		}
-	}
-
 	async encode(
 		videoPaths: string[],
 		codecType: "wav1" | "mav1" | "mx265" = "wav1",
@@ -96,27 +84,29 @@ export default class VideoWorker {
 		thumbnailSeekPercent: number = 15, //1-100
 		basepath: string = this.#destPath,
 	) {
+		videoPaths = Array.from(new Set(videoPaths)); //keep unique videos path
+
 		const availmem: number = Math.floor(freemem() / 1024 / 1024);
 
 		const batchSize: number = Math.floor(availmem / 1500) || 1;
 
+		/* dumpRunTimeData({
+			data: videoPaths,
+			context: "Video Files",
+		}); */
+
 		try {
-			console.log(`\n[${currentTime()}] +++> ⏰ Video Encoding started.`);
+			console.log(
+				`\n[${currentTime()}] +++> ⏰ Video Encoding started.\n`,
+			);
 
 			console.log(`Number of videos in queue: ${videoPaths.length}`);
 			console.log(`Number of encodes at a time: ${batchSize}\n`);
 
-			const progressBar = new SingleBar(
-				{
-					format:
-						"[{bar}] {percentage}% | {value} of {total} ✅ | ⌛ Elapsed:{duration}s - ETA:{eta}s",
-					hideCursor: true,
-				},
-				Presets.shades_classic,
-			);
+			const progressBar = initProgressBar({ context: "Encoding Videos" });
 			progressBar.start(videoPaths.length, 0);
 
-			const promises = videoPaths.map(
+			const encodePromises = videoPaths.map(
 				(videoPath) => () =>
 					new Promise<void>((resolve, reject) => {
 						const outputPath = join(
@@ -135,14 +125,12 @@ export default class VideoWorker {
 					}),
 			);
 
-			try {
-				await this.#_encodeBatchHandler(promises, batchSize);
-				progressBar.stop();
-			} catch (err) {
-				terminate({
-					reason: "Error in batch process of video encoding\n" + err,
-				});
-			}
+			await batchProcess({
+				promisedProcs: encodePromises,
+				batchSize: batchSize,
+				context: "Video Encoding",
+			});
+			progressBar.stop();
 
 			console.log(`\n[${currentTime()}] ===> ✅ Videos were encoded.`);
 
