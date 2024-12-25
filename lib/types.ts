@@ -250,8 +250,10 @@ export interface ImageWorkerParamsMain {
 	targetFormat: ImageWorkerOutputTypes;
 }
 
+export type CodecType = "wav1" | "mav1" | "mx265";
+
 export interface VideoWorkerParamsMain {
-	codecType: "wav1" | "mav1" | "mx265";
+	codecType: CodecType;
 	encodeLevel?: 1 | 2 | 3;
 }
 
@@ -259,3 +261,8 @@ export type ImageSizeResponse = Record<
 	string,
 	{ width: number; height?: number }
 >;
+
+export interface ThumbnailMakerResponse {
+	thumbnailPath: string;
+	videoPath: string;
+}

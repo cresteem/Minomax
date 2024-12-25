@@ -161,7 +161,7 @@ export default class ImageSetGenerator {
 		htmlPathPatterns: string[];
 		ignorePatterns: string[];
 		destinationBase: string;
-	}) {
+	}): Promise<{ linkedImages: string[]; transformedHtmlFiles: string[] }> {
 		const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
 		const batchSize: number = Math.round(freememInMB / 2000);
 
@@ -239,25 +239,23 @@ export default class ImageSetGenerator {
 		);
 
 		console.log(
-			`\n[${currentTime()}] +++> ⏰ Img tags transformation & Video thumbnail linking started.`,
+			`\n[${currentTime()}] +++> ⏰ Img tags transformation started.`,
 		);
 		/* Transform img tags to picture tags*/
 		const rwBatchSize: number = batchSize * 5;
-		const { linkedVideos, videoThumbnails } =
-			await this.#imgTagTransformer.transform({
-				htmlsRecords: imagesMetaofHtmls,
-				variableImgFormat: variableImgFormat,
-				destinationBase: destinationBase,
-				batchSize: rwBatchSize,
-			});
+		await this.#imgTagTransformer.transform({
+			htmlsRecords: imagesMetaofHtmls,
+			variableImgFormat: variableImgFormat,
+			destinationBase: destinationBase,
+			batchSize: rwBatchSize,
+		});
 
 		console.log(`[${currentTime()}] ===> ✅ Transformation completed.`);
 
 		//available image and video list
 		return {
-			linkedVideos: linkedVideos,
-			videoThumbnails: videoThumbnails.map((thumbnailPath) =>
-				join(destinationBase, relative(process.cwd(), thumbnailPath)),
+			transformedHtmlFiles: htmlFiles.map((htmlPath) =>
+				join(destinationBase, relative(".", htmlPath)),
 			),
 			linkedImages: Object.values(imageSetPaths)
 				.map((set) => Object.values(set))

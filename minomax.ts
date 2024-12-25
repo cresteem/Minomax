@@ -1,21 +1,30 @@
 import { globSync } from "glob";
-import { rmSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { freemem } from "node:os";
+import { relative, sep } from "node:path";
 import configurations from "./configLoader";
 import ImageWorker from "./lib/core/image";
 import ImageSetGenerator from "./lib/core/imageset";
 import VideoWorker from "./lib/core/video";
 import WebDocsWorker from "./lib/core/webdocs";
 import {
+	CodecType,
 	ConfigurationOptions,
 	ImageWorkerOutputTypes,
 	ImageWorkerParamsMain,
 	VideoWorkerParamsMain,
 } from "./lib/types";
 import {
+	batchProcess,
 	copyFiles,
+	currentTime,
 	deleteOldLogs,
+	initProgressBar,
 	logNotifier,
+	logWriter,
 	terminate,
+	writeContent,
 } from "./lib/utils";
 
 export class Minomax {
@@ -44,25 +53,27 @@ export class Minomax {
 	async minomax({
 		imageWorkerParams,
 		videoWorkerParams,
-		destinationBasePath = this.configurations.destPath,
 		ignorePatterns = this.configurations.ignorePatterns,
 		webDocFilesPatterns = this.configurations.webdoc.lookupPatterns,
 		removeOld = this.configurations.removeOld,
 	}: {
 		imageWorkerParams: ImageWorkerParamsMain;
 		videoWorkerParams: VideoWorkerParamsMain;
-		destinationBasePath?: string;
 		ignorePatterns?: string[];
 		webDocFilesPatterns?: string[];
 		removeOld?: boolean;
 	}) {
 		this.#beforeAll();
 
+		const destinationBasePath = this.configurations.destPath;
+
 		ignorePatterns = [
 			...ignorePatterns,
 			"node_modules/**",
 			`${destinationBasePath}/**`,
 		];
+
+		const { targetFormat } = imageWorkerParams;
 
 		// Step:1 Pre processing
 		/*  I-Delete old dest */
@@ -80,7 +91,7 @@ export class Minomax {
 			await copyFiles(webDocFiles, destinationBasePath);
 		}
 
-		// Step:2  I) Image set generation , II) Img tag transformation, III) Video thumbnail linking.
+		// Step:2
 		const htmlPathPatterns: string[] = [...webDocFilesPatterns].filter(
 			(pattern: string) => pattern.endsWith(".html"),
 		);
@@ -90,26 +101,34 @@ export class Minomax {
 				reason: "HTML pattern not found in lookupPattern, parameter",
 			});
 		}
-
-		const { linkedImages, linkedVideos, videoThumbnails } =
+		// 2.I) Image set generation & Img tag transformation,
+		const { linkedImages, transformedHtmlFiles } =
 			await this.#imageGenerator.generate({
 				htmlPathPatterns: htmlPathPatterns,
 				destinationBase: destinationBasePath,
 				ignorePatterns: ignorePatterns,
-				variableImgFormat: imageWorkerParams.targetFormat,
+				variableImgFormat: targetFormat,
 			});
 
-		// Step:3 Video worker - I) Compress videos, II) Generate thumbnail of them.
-		if (linkedVideos.length) {
+		// 2.II) Video thumbnail making & linking.
+		const videoMetas = await this.makeVideoThumbnail({
+			htmlFiles: transformedHtmlFiles,
+			variableImgFormat: targetFormat,
+			videoCodec: videoWorkerParams.codecType,
+			destinationBase: destinationBasePath,
+		});
+		const availableVideos = Object.keys(videoMetas);
+		const thumbnails = Object.values(videoMetas);
+
+		// Step:3 Video worker - I) Compress videos
+		if (availableVideos.length) {
 			const { codecType, encodeLevel } = videoWorkerParams;
 			const videoEncodeLevel: 1 | 2 | 3 = encodeLevel || 3;
-			const thumbnailSeekPercent: number = 15;
 
 			await this.#videoWorker.encode(
-				linkedVideos,
+				Array.from(availableVideos),
 				codecType,
 				videoEncodeLevel,
-				thumbnailSeekPercent,
 				destinationBasePath,
 			);
 		}
@@ -118,10 +137,8 @@ export class Minomax {
 		const compressedImagesDestination: string = process.cwd(); //overwriting uncompressed images with compressed
 
 		/* I) Standard pictures */
-		const imagePaths = [...linkedImages, ...videoThumbnails];
+		const imagePaths = [...linkedImages, ...thumbnails];
 		if (imagePaths.length) {
-			const { targetFormat } = imageWorkerParams;
-
 			await this.#imageWorker.encode(
 				imagePaths,
 				targetFormat,
@@ -223,12 +240,10 @@ export class Minomax {
 		});
 
 		try {
-			const thumbnailSeekPercent: number = 20;
 			await this.#videoWorker.encode(
 				videoFiles,
 				codecType,
 				encodeLevel,
-				thumbnailSeekPercent,
 				destinationBasePath,
 			);
 		} catch (err) {
@@ -237,6 +252,153 @@ export class Minomax {
 		}
 
 		this.#afterAll();
+	}
+
+	async makeVideoThumbnail({
+		htmlFiles,
+		htmlLookupPattern,
+		ignorePatterns = [],
+		variableImgFormat = false,
+		videoCodec = false,
+		destinationBase = "",
+		seekPercentage = 15,
+	}: {
+		htmlFiles?: string[];
+		htmlLookupPattern?: string[] | string;
+		ignorePatterns?: string[] | string;
+		variableImgFormat?: ImageWorkerOutputTypes | false;
+		videoCodec?: CodecType | false;
+		destinationBase?: string;
+		seekPercentage?: number;
+	}): Promise<Record<string, string>> {
+		if (!htmlFiles && !htmlLookupPattern) {
+			terminate({
+				reason:
+					"❌ Parameter missing: htmlFiles or htmlLookupPattern required in makeVideoThumbnail()",
+			});
+		}
+
+		if (htmlLookupPattern) {
+			htmlFiles = globSync(htmlLookupPattern, {
+				absolute: true,
+				cwd: process.cwd(),
+				nodir: true,
+				ignore: ignorePatterns,
+			});
+		}
+
+		const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
+		const batchSize: number = Math.round(freememInMB / 300);
+
+		console.log(
+			`\n[${currentTime()}] +++> ⏰ Thumbnail worker started.\n`,
+		);
+
+		let progressBar = initProgressBar({
+			context: "Linking Video Thumbnails",
+		});
+
+		//linking thumnails
+		const result: Record<string, string> = {}; // Record < videoPath, thumbnailPath >
+
+		const linkPromises: (() => Promise<void>)[] = (htmlFiles || []).map(
+			(htmlFile: string) => () =>
+				new Promise((resolve, reject) => {
+					readFile(htmlFile, { encoding: "utf-8" })
+						.then((htmlContent: string) => {
+							const { updatedContent, metas } =
+								this.#videoWorker.videoThumbnailLinker({
+									htmlFilePath: htmlFile,
+									htmlContent: htmlContent,
+									variableImgFormat: variableImgFormat,
+									videoCodec: videoCodec,
+								});
+
+							//only hold existing videoPaths
+							Object.entries(metas).forEach(
+								([videoPath, thumbnailPath]) => {
+									if (destinationBase) {
+										const backLevel = destinationBase?.split(sep)?.length;
+
+										videoPath = relative(process.cwd(), videoPath)
+											?.split(sep)
+											?.slice(backLevel)
+											?.join(sep);
+									}
+
+									if (existsSync(videoPath)) {
+										result[videoPath] = relative(".", thumbnailPath);
+									} else {
+										logWriter(`⭕ Skipping video: ${videoPath}`);
+									}
+								},
+							);
+
+							writeContent(updatedContent, htmlFile)
+								.then(() => {
+									progressBar.increment();
+									resolve();
+								})
+								.catch(reject);
+						})
+						.catch(reject);
+				}),
+		);
+
+		progressBar.start(linkPromises.length, 0);
+
+		await batchProcess({
+			promisedProcs: linkPromises,
+			batchSize: batchSize,
+			context: "Thumbnail Linker",
+		});
+
+		progressBar.stop();
+		console.log("");
+
+		//making thumbnails
+		progressBar = initProgressBar({
+			context: "Making Video Thumbnail",
+		});
+
+		const thumbnailPromises: (() => Promise<void>)[] = Object.keys(
+			result,
+		).map(
+			(videoPath: string) => () =>
+				new Promise((resolve, reject) => {
+					this.#videoWorker
+						.thumbnailGenerator({
+							videoPath: videoPath,
+							seekPercentage: seekPercentage,
+							basepath: destinationBase,
+						})
+						.then(() => {
+							progressBar.increment();
+							resolve();
+						})
+						.catch((err) => {
+							reject(
+								`\nError while generating thumbnail for ${videoPath}\n${err}`,
+							);
+						});
+				}),
+		);
+
+		progressBar.start(thumbnailPromises.length, 0);
+
+		await batchProcess({
+			promisedProcs: thumbnailPromises,
+			batchSize: batchSize,
+			context: "Video Thumbnail Maker",
+		});
+
+		progressBar.stop();
+
+		console.log(
+			`\n[${currentTime()}] ===> ✅ Thumbnails were generated & linked.`,
+		);
+
+		return result;
 	}
 
 	async minifyWebdoc({
@@ -309,5 +471,5 @@ export class Minomax {
 export type minomaxOptions = ConfigurationOptions;
 
 process.on("uncaughtException", (err) => {
-	terminate({ reason: "Unhandled exception:\t" + err });
+	terminate({ reason: "\nUnhandled exception:\n" + err });
 });

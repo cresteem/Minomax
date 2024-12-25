@@ -1,12 +1,25 @@
 import { encode as encodeVideo } from "handstop";
 import { freemem } from "node:os";
-import { basename, dirname, extname, join, relative } from "node:path";
+import {
+	basename,
+	dirname,
+	extname,
+	join,
+	relative,
+	resolve,
+	sep,
+} from "node:path";
 
 import ffmpegIns from "@ffmpeg-installer/ffmpeg";
 import ffprobeIns from "@ffprobe-installer/ffprobe";
 import ffmpeg from "fluent-ffmpeg";
 
-import { ConfigurationOptions } from "../../lib/types";
+import { CheerioAPI, load } from "cheerio/slim";
+import {
+	CodecType,
+	ConfigurationOptions,
+	ImageWorkerOutputTypes,
+} from "../../lib/types";
 import {
 	batchProcess,
 	currentTime,
@@ -25,11 +38,95 @@ export default class VideoWorker {
 		this.#destPath = configuration.destPath;
 	}
 
-	#_thumbnailGenerator(
-		videoPath: string,
-		seekPercentage: number,
-		basepath: string,
-	): Promise<string> {
+	videoThumbnailLinker({
+		htmlFilePath,
+		htmlContent,
+		variableImgFormat,
+		videoCodec,
+	}: {
+		htmlFilePath: string;
+		htmlContent: string;
+		variableImgFormat: ImageWorkerOutputTypes | false;
+		videoCodec: CodecType | false;
+	}): { metas: Record<string, string>; updatedContent: string } {
+		const videoMetas: Record<string, string> = {};
+
+		// Load the HTML content into Cheerio
+		const htmlTree: CheerioAPI = load(htmlContent);
+
+		//video thumbnail includer
+		const videoTags: Element[] | any[] = htmlTree("video") as any;
+
+		for (const videoTag of videoTags) {
+			const shallowVideoUrl: string | undefined =
+				htmlTree(videoTag).attr("src");
+
+			const linkInSourceTag = htmlTree(videoTag)
+				.find("source:first-child")
+				.attr("src");
+			let videoUrl: string = shallowVideoUrl
+				? shallowVideoUrl
+				: linkInSourceTag || "";
+
+			const newSrc = join(
+				dirname(videoUrl),
+				`${basename(videoUrl, extname(videoUrl))}${
+					videoCodec
+						? ["mx265", "mav1"].includes(videoCodec)
+							? ".mp4"
+							: ".webm"
+						: extname(videoUrl)
+				}`,
+			);
+
+			if (shallowVideoUrl) {
+				htmlTree(videoTag).attr("src", newSrc);
+			} else if (linkInSourceTag) {
+				htmlTree(videoTag).find("source:first-child").attr("src", newSrc);
+			}
+
+			if (!videoUrl) {
+				continue;
+			} else {
+				videoUrl = resolve(join(dirname(htmlFilePath), videoUrl));
+				/* if (!existsSync(videoUrl)) {
+					continue;
+				} */
+			}
+
+			const thumbnailUrlWithNoExt: string = join(
+				dirname(videoUrl),
+				"thumbnails",
+				basename(videoUrl, extname(videoUrl)),
+			);
+
+			videoMetas[videoUrl] = resolve(thumbnailUrlWithNoExt.concat(".jpg"));
+
+			const relativeSrcPath: string = relative(
+				dirname(htmlFilePath),
+				thumbnailUrlWithNoExt.concat(
+					variableImgFormat ? "." + variableImgFormat : ".jpg",
+				),
+			).replaceAll(sep, "/");
+
+			htmlTree(videoTag).attr("poster", relativeSrcPath);
+		}
+
+		return {
+			metas: videoMetas,
+			updatedContent: htmlTree.root().toString(),
+		};
+	}
+
+	thumbnailGenerator({
+		videoPath,
+		basepath,
+		seekPercentage = 15, //1-100
+	}: {
+		videoPath: string;
+		basepath: string;
+		seekPercentage: number;
+	}): Promise<void> {
 		const outputFramePath: string = join(
 			basepath,
 			relative(".", dirname(videoPath)),
@@ -48,7 +145,7 @@ export default class VideoWorker {
 					reject("Error while getting video duration:" + err);
 				}
 
-				const durationInSeconds: number = metadata.format?.duration ?? 0;
+				const durationInSeconds: number = metadata?.format?.duration || 0;
 
 				// Calculate seek time based on percentage
 				const seekTime: number =
@@ -63,12 +160,13 @@ export default class VideoWorker {
 						timestamps: [seekTime],
 					})
 					.on("end", () => {
-						resolve(
+						/* console.log(
 							`Video thumbnail saved in ${join(
 								outputFramePath,
 								filename,
 							)}`,
-						);
+						); */
+						resolve();
 					})
 					.on("error", (err: Error) => {
 						reject("Error while saving video thumbnail:" + err);
@@ -81,7 +179,6 @@ export default class VideoWorker {
 		videoPaths: string[],
 		codecType: "wav1" | "mav1" | "mx265" = "wav1",
 		encodeLevel: 1 | 2 | 3 = 1,
-		thumbnailSeekPercent: number = 15, //1-100
 		basepath: string = this.#destPath,
 	) {
 		videoPaths = Array.from(new Set(videoPaths)); //keep unique videos path
@@ -111,7 +208,15 @@ export default class VideoWorker {
 					new Promise<void>((resolve, reject) => {
 						const outputPath = join(
 							basepath,
-							relative(process.cwd(), videoPath),
+							relative(
+								process.cwd(),
+								join(
+									dirname(videoPath),
+									`${basename(videoPath, extname(videoPath))}.${
+										["mx265", "mav1"].includes(codecType) ? "mp4" : "webm"
+									}`,
+								),
+							),
 						);
 						encodeVideo(videoPath, outputPath, codecType, encodeLevel)
 							.then(() => {
@@ -133,20 +238,6 @@ export default class VideoWorker {
 			progressBar.stop();
 
 			console.log(`\n[${currentTime()}] ===> ✅ Videos were encoded.`);
-
-			console.log(
-				`\n[${currentTime()}] +++> ⏰ Thumbnail generation started.`,
-			);
-
-			for (const videoPath of videoPaths) {
-				await this.#_thumbnailGenerator(
-					videoPath,
-					thumbnailSeekPercent,
-					basepath,
-				);
-			}
-
-			console.log(`[${currentTime()}] ===> ✅ Thumbnails were generated.`);
 		} catch (error: any) {
 			terminate({
 				reason:

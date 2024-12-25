@@ -27,7 +27,6 @@ program
 		"wav1",
 	)
 	.option("-e, --encode [1 | 2 | 3]", "Video encoding level", parseInt, 3)
-	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
 		"-i, --ignore <patterns>",
 		"Ignore path patterns",
@@ -41,7 +40,6 @@ program
 				codecType: options.codec,
 				encodeLevel: options.encode,
 			},
-			destinationBasePath: options.dest,
 			ignorePatterns: options.ignore,
 		});
 	});
