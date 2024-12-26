@@ -1,10 +1,10 @@
 import { globSync } from "glob";
 
 import { existsSync } from "node:fs";
-import { freemem } from "node:os";
 import { extname, join, relative } from "node:path";
 
 import {
+	BatchSizeType,
 	ConfigurationOptions,
 	ImageSetGenRecord,
 	ImageTagsRecord,
@@ -14,6 +14,7 @@ import {
 import {
 	batchProcess,
 	currentTime,
+	getFreeMemBatchSize,
 	initProgressBar,
 	logWriter,
 	terminate,
@@ -26,10 +27,15 @@ import ImgTagTransformer from "./imageset.lib/transformer";
 export default class ImageSetGenerator {
 	#imgTagTransformer: ImgTagTransformer;
 	#configurations: ConfigurationOptions;
+	#batchSizes: BatchSizeType;
 
-	constructor(configurations: ConfigurationOptions) {
+	constructor(
+		configurations: ConfigurationOptions,
+		batchSizes: BatchSizeType,
+	) {
 		this.#imgTagTransformer = new ImgTagTransformer(configurations);
 		this.#configurations = configurations;
+		this.#batchSizes = batchSizes;
 	}
 
 	#_makeImageSetMeta(
@@ -44,31 +50,34 @@ export default class ImageSetGenerator {
 		const imageSetMeta: Record<string, { path: string; width: number }> =
 			{};
 
-		const isRasterizedImage: boolean =
-			extname(imgMeta.imageLink) !== ".svg";
+		const imageLink = imgMeta.imageLink;
+		if (!imageLink) {
+			terminate({
+				reason: "image link not found in " + imgMeta.imgTagReference,
+			});
+		}
+
+		const isRasterizedImage: boolean = extname(imageLink) !== ".svg";
 
 		if (isRasterizedImage) {
 			screenKeys.forEach((screenKey: string) => {
 				imageSetMeta[screenKey] = {
 					path: join(
 						destinationBase,
-						relative(
-							process.cwd(),
-							imageSetPaths[imgMeta.imageLink][screenKey],
-						),
+						relative(process.cwd(), imageSetPaths[imageLink][screenKey]),
 					),
 					width: imgMeta.imageSizes[screenKey]?.width || 0,
 				};
 			});
 		} else {
 			imageSetMeta[screenKeys[0]] = {
-				path: imageSetPaths[imgMeta.imageLink]["svg"],
+				path: imageSetPaths[imageLink]["svg"],
 				width: 0,
 			};
 		}
 
 		return {
-			baseImagePath: imgMeta.imageLink,
+			baseImagePath: imageLink,
 			imageSet: imageSetMeta,
 		};
 	}
@@ -162,24 +171,27 @@ export default class ImageSetGenerator {
 		ignorePatterns: string[];
 		destinationBase: string;
 	}): Promise<{ linkedImages: string[]; transformedHtmlFiles: string[] }> {
-		const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
-		const batchSize: number = Math.round(freememInMB / 2000);
+		const pupeeterBatchSize: number = getFreeMemBatchSize({
+			memPerProc: 2000,
+			cPerBatchSize: this.#batchSizes.cPer,
+		});
 
 		const htmlFiles: string[] = globSync(htmlPathPatterns, {
 			ignore: ignorePatterns,
 			absolute: true,
+			nodir: true,
 		});
 
 		console.log(
 			`\n[${currentTime()}] +++> ⏰ Imageset generation started.`,
 		);
 		console.log(`\nNumber of HTML file in queue: ${htmlFiles.length}`);
-		console.log(`Number of HTML file at a time: ${batchSize}\n`);
+		console.log(`Number of HTML file at a time: ${pupeeterBatchSize}\n`);
 
 		//making metadata for images that available in html
 		const imagesMetaofHtmls: ImageTagsRecord[] = await new HTMLParser(
 			this.#configurations,
-		).extractImagesMeta(htmlFiles, batchSize);
+		).extractImagesMeta(htmlFiles, pupeeterBatchSize);
 
 		/* path of each images */
 		const imageSetPaths: Record<
@@ -226,7 +238,7 @@ export default class ImageSetGenerator {
 				progressBar,
 			);
 
-		const generatorBatchSize = batchSize * 4;
+		const generatorBatchSize: number = this.#batchSizes.cPer;
 		await batchProcess({
 			promisedProcs: promisedProcs,
 			batchSize: generatorBatchSize,
@@ -242,7 +254,7 @@ export default class ImageSetGenerator {
 			`\n[${currentTime()}] +++> ⏰ Img tags transformation started.`,
 		);
 		/* Transform img tags to picture tags*/
-		const rwBatchSize: number = batchSize * 5;
+		const rwBatchSize: number = this.#batchSizes.cPer;
 		await this.#imgTagTransformer.transform({
 			htmlsRecords: imagesMetaofHtmls,
 			variableImgFormat: variableImgFormat,

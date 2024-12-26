@@ -1,5 +1,4 @@
 import { encode as encodeVideo } from "handstop";
-import { freemem } from "node:os";
 import {
 	basename,
 	dirname,
@@ -16,6 +15,7 @@ import ffmpeg from "fluent-ffmpeg";
 
 import { CheerioAPI, load } from "cheerio/slim";
 import {
+	BatchSizeType,
 	CodecType,
 	ConfigurationOptions,
 	ImageWorkerOutputTypes,
@@ -23,6 +23,7 @@ import {
 import {
 	batchProcess,
 	currentTime,
+	getFreeMemBatchSize,
 	initProgressBar,
 	makeDirf,
 	terminate,
@@ -30,12 +31,17 @@ import {
 
 export default class VideoWorker {
 	#destPath: string;
+	#batchSizes: BatchSizeType;
 
-	constructor(configuration: ConfigurationOptions) {
+	constructor(
+		configuration: ConfigurationOptions,
+		batchSizes: BatchSizeType,
+	) {
 		ffmpeg.setFfmpegPath(ffmpegIns.path);
 		ffmpeg.setFfprobePath(ffprobeIns.path);
 
 		this.#destPath = configuration.destPath;
+		this.#batchSizes = batchSizes;
 	}
 
 	videoThumbnailLinker({
@@ -183,9 +189,10 @@ export default class VideoWorker {
 	) {
 		videoPaths = Array.from(new Set(videoPaths)); //keep unique videos path
 
-		const availmem: number = Math.floor(freemem() / 1024 / 1024);
-
-		const batchSize: number = Math.floor(availmem / 1500) || 1;
+		const videoEncodeBatchSize: number = getFreeMemBatchSize({
+			memPerProc: 1500,
+			cPerBatchSize: this.#batchSizes.cPer,
+		});
 
 		/* dumpRunTimeData({
 			data: videoPaths,
@@ -198,7 +205,9 @@ export default class VideoWorker {
 			);
 
 			console.log(`Number of videos in queue: ${videoPaths.length}`);
-			console.log(`Number of encodes at a time: ${batchSize}\n`);
+			console.log(
+				`Number of encodes at a time: ${videoEncodeBatchSize}\n`,
+			);
 
 			const progressBar = initProgressBar({ context: "Encoding Videos" });
 			progressBar.start(videoPaths.length, 0);
@@ -232,7 +241,7 @@ export default class VideoWorker {
 
 			await batchProcess({
 				promisedProcs: encodePromises,
-				batchSize: batchSize,
+				batchSize: videoEncodeBatchSize,
 				context: "Video Encoding",
 			});
 			progressBar.stop();

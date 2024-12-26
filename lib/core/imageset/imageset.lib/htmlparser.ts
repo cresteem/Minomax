@@ -30,7 +30,7 @@ export default class HTMLParser {
 		htmlTree: CheerioAPI,
 	): Promise<SrcRecordType> {
 		// extracting src
-		let imageLink: string = htmlTree(tag).attr("src") || "";
+		let imageLink: string | false = htmlTree(tag).attr("src") || false;
 		if (!imageLink) {
 			terminate({
 				reason: `Image link not found in this img tag at file: ${htmlfile} : ${htmlTree(
@@ -42,8 +42,8 @@ export default class HTMLParser {
 		}
 
 		// extracting id
-		let id: string | undefined = htmlTree(tag).attr("id") || "";
-		id = id ? `#${id}` : undefined;
+		let id: string | false = htmlTree(tag).attr("id") || false;
+		id = id ? `#${id}` : false;
 
 		// extracting classes
 		const classes: string = htmlTree(tag).attr("class") || "";
@@ -51,19 +51,10 @@ export default class HTMLParser {
 			? classes.split(/\s+/).map((classname) => `.${classname}`)
 			: [];
 
-		/* 	//require attributes for (<picture>)imagesets of per img tag
-		const attributes: ImageAttributes = {
-			id: id.slice(1),
-			class: classes,
-			alt: htmlTree(tag).attr("alt") || "",
-			loading: htmlTree(tag).attr("loading") || "",
-			style: htmlTree(tag).attr("style") || "",
-		}; */
-
 		const imgTagReference: string = htmlTree(tag).toString();
 
 		return new Promise((resolve, reject) => {
-			const selectors: { id: string | undefined; classes: string[] } = {
+			const selectors: { id: string | false; classes: string[] } = {
 				id: id,
 				classes: classList,
 			};
@@ -100,9 +91,9 @@ export default class HTMLParser {
 		const imageRecords: SrcRecordType[] = [];
 
 		/* Activating promises */
-		for (const promise of promises) {
+		for (const promisedFunc of promises) {
 			try {
-				const srcRecord: SrcRecordType = await promise();
+				const srcRecord: SrcRecordType = await promisedFunc();
 				imageRecords.push(srcRecord);
 			} catch (err) {
 				console.log(err);
@@ -149,7 +140,7 @@ export default class HTMLParser {
 
 	async extractImagesMeta(
 		htmlFiles: string[],
-		batchSize: number = 2,
+		batchSize: number,
 	): Promise<ImageTagsRecord[]> {
 		const progressBar = initProgressBar({
 			context: "Extracting Image Records",

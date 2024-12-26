@@ -11,7 +11,7 @@ import { copyFile, writeFile } from "node:fs/promises";
 import { freemem } from "node:os";
 import { dirname, join, relative } from "node:path";
 
-export function terminate({ reason }: { reason: string }): void {
+export function terminate({ reason }: { reason: string }): never {
 	console.error(reason);
 	process.exit(1);
 }
@@ -29,14 +29,16 @@ export function currentTime(): string {
 	return `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`;
 }
 
-export function calculateBatchSize({
-	perProcMem,
+export function getFreeMemBatchSize({
+	memPerProc,
+	cPerBatchSize,
 }: {
-	perProcMem: number;
+	memPerProc: number;
+	cPerBatchSize: number;
 }) {
 	const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
-	const batchSize: number = Math.round(freememInMB / perProcMem);
-	return batchSize;
+	const freeMemBatchSize: number = Math.round(freememInMB / memPerProc);
+	return Math.min(freeMemBatchSize, cPerBatchSize);
 }
 
 export function writeContent(
@@ -59,14 +61,11 @@ export function writeContent(
 export async function copyFiles(
 	filePaths: string[],
 	destinationBasePath: string,
+	batchSize: number,
 ) {
-	const batchSize: number = calculateBatchSize({ perProcMem: 100 });
-
-	const promises: (() => Promise<void>)[] = [];
-
-	filePaths.forEach((filePath: string) => {
-		promises.push((): Promise<void> => {
-			return new Promise((resolve, reject) => {
+	const copyPromises: (() => Promise<void>)[] = filePaths.map(
+		(filePath: string) => () =>
+			new Promise((resolve, reject) => {
 				const destPath: string = join(
 					destinationBasePath,
 					relative(process.cwd(), filePath),
@@ -75,27 +74,14 @@ export async function copyFiles(
 				makeDirf(dirname(destPath));
 
 				copyFile(filePath, destPath).then(resolve).catch(reject);
-			});
-		});
+			}),
+	);
+
+	await batchProcess({
+		promisedProcs: copyPromises,
+		batchSize: batchSize,
+		context: "Copying Files",
 	});
-
-	const promiseBatches: (() => Promise<void>)[][] = [];
-
-	/* Batching promises */
-	for (let i = 0; i < promises.length; i += batchSize) {
-		promiseBatches.push(promises.slice(i, i + batchSize));
-	}
-
-	/* Activating batches */
-	for (const batch of promiseBatches) {
-		const activatedBatch: Promise<void>[] = batch.map((func) => func());
-
-		try {
-			await Promise.all(activatedBatch);
-		} catch (err) {
-			console.log(err);
-		}
-	}
 }
 
 const logPath = join(process.cwd(), "minomax.err.log");

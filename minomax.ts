@@ -1,7 +1,7 @@
 import { globSync } from "glob";
 import { existsSync, rmSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { freemem } from "node:os";
+import { cpus } from "node:os";
 import { relative, sep } from "node:path";
 import configurations from "./configLoader";
 import ImageWorker from "./lib/core/image";
@@ -9,6 +9,7 @@ import ImageSetGenerator from "./lib/core/imageset";
 import VideoWorker from "./lib/core/video";
 import WebDocsWorker from "./lib/core/webdocs";
 import {
+	BatchSizeType,
 	CodecType,
 	ConfigurationOptions,
 	ImageWorkerOutputTypes,
@@ -34,6 +35,11 @@ export class Minomax {
 	#imageGenerator: ImageSetGenerator;
 	#webDocWorker: WebDocsWorker;
 
+	#batchSizes: BatchSizeType = {
+		//batch size based on percentage of cpu allocation.(80% of CPU)
+		cPer: Math.floor((cpus().length * 80) / 100),
+	};
+
 	#beforeAll = () => {
 		deleteOldLogs();
 	};
@@ -44,10 +50,23 @@ export class Minomax {
 
 	constructor() {
 		this.configurations = configurations();
-		this.#videoWorker = new VideoWorker(this.configurations);
-		this.#imageWorker = new ImageWorker(this.configurations);
-		this.#imageGenerator = new ImageSetGenerator(this.configurations);
-		this.#webDocWorker = new WebDocsWorker(this.configurations);
+
+		this.#videoWorker = new VideoWorker(
+			this.configurations,
+			this.#batchSizes,
+		);
+		this.#imageWorker = new ImageWorker(
+			this.configurations,
+			this.#batchSizes,
+		);
+		this.#imageGenerator = new ImageSetGenerator(
+			this.configurations,
+			this.#batchSizes,
+		);
+		this.#webDocWorker = new WebDocsWorker(
+			this.configurations,
+			this.#batchSizes,
+		);
 	}
 
 	async minomax({
@@ -88,7 +107,11 @@ export class Minomax {
 			nodir: true,
 		});
 		if (webDocFiles.length) {
-			await copyFiles(webDocFiles, destinationBasePath);
+			await copyFiles(
+				webDocFiles,
+				destinationBasePath,
+				this.#batchSizes.cPer,
+			);
 		}
 
 		// Step:2
@@ -287,9 +310,6 @@ export class Minomax {
 			});
 		}
 
-		const freememInMB: number = Math.floor(freemem() / 1024 / 1024);
-		const batchSize: number = Math.round(freememInMB / 300);
-
 		console.log(
 			`\n[${currentTime()}] +++> ⏰ Thumbnail worker started.\n`,
 		);
@@ -349,7 +369,7 @@ export class Minomax {
 
 		await batchProcess({
 			promisedProcs: linkPromises,
-			batchSize: batchSize,
+			batchSize: this.#batchSizes.cPer,
 			context: "Thumbnail Linker",
 		});
 
@@ -388,7 +408,7 @@ export class Minomax {
 
 		await batchProcess({
 			promisedProcs: thumbnailPromises,
-			batchSize: batchSize,
+			batchSize: this.#batchSizes.cPer,
 			context: "Video Thumbnail Maker",
 		});
 

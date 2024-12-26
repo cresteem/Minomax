@@ -1,20 +1,16 @@
 import { load } from "cheerio/slim";
-import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import { NewNamesMakerResponse } from "../../../types";
+import { BatchSizeType, NewNamesMakerResponse } from "../../../types";
 import {
 	batchProcess,
-	calculateBatchSize,
 	initProgressBar,
 	writeContent,
 } from "../../../utils";
 import SelectorsExtractor from "./extractor";
-const batchSize: number = calculateBatchSize({ perProcMem: 400 });
 
 class _SelectorsReplacer {
 	#encloser: string = "'"; //* {encloser} string -> enclosing quotes ( ' or " ) default= " .
-
 	constructor() {}
 
 	/*
@@ -171,7 +167,11 @@ class _SelectorsReplacer {
 }
 
 export default class SelectorsMangler {
-	constructor() {}
+	#batchSizes: BatchSizeType;
+
+	constructor({ batchSizes }: { batchSizes: BatchSizeType }) {
+		this.#batchSizes = batchSizes;
+	}
 
 	//generate alteration names for selectors
 	*#_nameGenerator(): Generator<string> {
@@ -240,19 +240,20 @@ export default class SelectorsMangler {
 		return nameRecords;
 	}
 
-	#_makeNewNames(
+	async #_makeNewNames(
 		webDocFilesPatterns: string[],
 		noDirPatterns: string[],
 		fileSearchBasePath: string,
-		map: boolean = false,
-	): NewNamesMakerResponse {
-		const {
-			availableSelectors: { uniqueIds, uniqueClassNames, webDocFiles },
-		} = new SelectorsExtractor({
-			webDocFilesPatterns: webDocFilesPatterns,
-			noDirPatterns: noDirPatterns,
-			fileSearchBasePath: fileSearchBasePath,
-		});
+		/* map: boolean = false, */
+	): Promise<NewNamesMakerResponse> {
+		const { uniqueIds, uniqueClassNames, webDocFiles } =
+			await new SelectorsExtractor({
+				batchSizes: this.#batchSizes,
+			}).selectorExtractor({
+				webDocFilesPatterns: webDocFilesPatterns,
+				noDirPatterns: noDirPatterns,
+				fileSearchBasePath: fileSearchBasePath,
+			});
 
 		const newClassNameRecords: Record<string, string> =
 			this.#_newNameAssigner(uniqueClassNames);
@@ -265,7 +266,7 @@ export default class SelectorsMangler {
 			...newIDNameRecords,
 		};
 
-		if (map) {
+		/* if (map) {
 			try {
 				const newSelectorsMapFile: string = join(
 					process.cwd(),
@@ -279,10 +280,12 @@ export default class SelectorsMangler {
 			} catch (err) {
 				console.log("Errror while writing map file\n" + err);
 			}
-		}
+		} */
 
 		console.log(`\nNumber of Web docs in queue: ${webDocFiles.length}`);
-		console.log(`Number of Web docs at a time: ${batchSize}\n`);
+		console.log(
+			`Number of Web docs at a time: ${this.#batchSizes.cPer}\n`,
+		);
 
 		console.log(
 			`Unique classes count = ${uniqueClassNames.length}\nUnique IDs count = ${uniqueIds.length}\n`,
@@ -301,7 +304,7 @@ export default class SelectorsMangler {
 		noDirPatterns: string[],
 		fileSearchBasePath: string,
 	): Promise<string[]> {
-		const { newSelectorsRecords, webDocFiles } = this.#_makeNewNames(
+		const { newSelectorsRecords, webDocFiles } = await this.#_makeNewNames(
 			webDocFilesPatterns,
 			noDirPatterns,
 			fileSearchBasePath,
@@ -364,7 +367,7 @@ export default class SelectorsMangler {
 
 		await batchProcess({
 			promisedProcs: renamePromises,
-			batchSize: batchSize,
+			batchSize: this.#batchSizes.cPer,
 			context: "Selector Renamer",
 		});
 		progressBar.stop();

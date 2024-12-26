@@ -53,7 +53,7 @@ function _getImageSize({
 }
 
 export function getImageSizes(
-	selectors: { id: string | undefined; classes: string[] },
+	selectors: { id: string | false; classes: string[] },
 	htmlPath: string,
 	screenSizes: Record<string, number>,
 ): Promise<ImageSizeResponse> {
@@ -79,22 +79,21 @@ export function getImageSizes(
 
 			const imageSizes: ImageSizeResponse = {};
 
-			const promises: (() => Promise<ImageSizeResponse>)[] = Object.keys(
-				screenSizes,
-			).map(
-				(screenKey: string) => (): Promise<ImageSizeResponse> =>
-					_getImageSize({
-						page: page,
-						screenKey: screenKey,
-						screenWidth: screenSizes[screenKey],
-						selector: selector,
-					}),
-			);
+			const screenDepImgSizePromises: (() => Promise<ImageSizeResponse>)[] =
+				Object.keys(screenSizes).map(
+					(screenKey: string) => (): Promise<ImageSizeResponse> =>
+						_getImageSize({
+							page: page,
+							screenKey: screenKey,
+							screenWidth: screenSizes[screenKey],
+							selector: selector,
+						}),
+				);
 
 			/* Activating promise */
-			for (const promise of promises) {
+			for (const promisedFunc of screenDepImgSizePromises) {
 				try {
-					const resolvedImageSize = await promise();
+					const resolvedImageSize = await promisedFunc();
 					Object.assign(imageSizes, resolvedImageSize);
 				} catch (err) {
 					console.log(err);

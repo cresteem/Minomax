@@ -1,43 +1,33 @@
 import { AtRule, Comment, parse, Rule } from "css";
 import { globSync } from "glob";
-import { readFileSync, statSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import {
+	BatchSizeType,
 	SelectorExtractorResponse,
 	UniqueSelectorsResponse,
 	WebDocFileListerResponse,
 } from "../../../types";
-import { terminate } from "../../../utils";
+import { batchProcess, terminate } from "../../../utils";
 
 export default class SelectorsExtractor {
-	availableSelectors: SelectorExtractorResponse;
+	#batchSizes: BatchSizeType;
 
-	constructor({
-		webDocFilesPatterns,
-		noDirPatterns,
-		fileSearchBasePath,
-	}: {
-		webDocFilesPatterns: string[];
-		noDirPatterns: string[];
-		fileSearchBasePath: string;
-	}) {
-		this.availableSelectors = this.#selectorExtractor(
-			webDocFilesPatterns,
-			noDirPatterns,
-			fileSearchBasePath,
-		);
+	constructor({ batchSizes }: { batchSizes: BatchSizeType }) {
+		this.#batchSizes = batchSizes;
 	}
 
-	#_fetchfiles(
+	async #_fetchfiles(
 		webDocFilesPatterns: string[],
 		noDirPatterns: string[],
 		fileSearchBasePath: string,
-	): WebDocFileListerResponse {
+	): Promise<WebDocFileListerResponse> {
 		const webDocFiles: string[] = globSync(webDocFilesPatterns, {
 			ignore: noDirPatterns,
 			cwd: fileSearchBasePath,
 			absolute: true,
-		}).filter((path) => statSync(path).isFile());
+			nodir: true,
+		});
 
 		/* dumpRunTimeData({ data: webDocFiles, context: "Webdoc Files" }); */
 
@@ -45,18 +35,24 @@ export default class SelectorsExtractor {
 			(file) => extname(file) === ".css",
 		);
 
-		let cssContents: string = "";
+		const cssContentPromises: (() => Promise<string>)[] = cssFiles.map(
+			(cssFile: string) => () =>
+				new Promise((resolve, reject) => {
+					readFile(cssFile, { encoding: "utf8" })
+						.then(resolve)
+						.catch((err) => {
+							reject("Error while fetching CSS content\n" + err);
+						});
+				}),
+		);
 
-		try {
-			cssFiles.forEach((cssFile: string) => {
-				const currentCssContent: string = readFileSync(cssFile, {
-					encoding: "utf8",
-				});
-				cssContents += currentCssContent + "\n";
-			});
-		} catch (err) {
-			terminate({ reason: "Error reading CSS file\n" + err });
-		}
+		const batchResponse: Awaited<string[]> = await batchProcess({
+			promisedProcs: cssContentPromises,
+			batchSize: this.#batchSizes.cPer,
+			context: "Reading CSS",
+		});
+
+		const cssContents: string = batchResponse.join("\n");
 
 		return {
 			cssContents: cssContents,
@@ -120,12 +116,16 @@ export default class SelectorsExtractor {
 		return Array.from(uniqueCleanSelectors);
 	}
 
-	#selectorExtractor(
-		webDocFilesPatterns: string[],
-		noDirPatterns: string[],
-		fileSearchBasePath: string,
-	): SelectorExtractorResponse {
-		const { webDocFiles, cssContents } = this.#_fetchfiles(
+	async selectorExtractor({
+		webDocFilesPatterns,
+		noDirPatterns,
+		fileSearchBasePath,
+	}: {
+		webDocFilesPatterns: string[];
+		noDirPatterns: string[];
+		fileSearchBasePath: string;
+	}): Promise<SelectorExtractorResponse> {
+		const { webDocFiles, cssContents } = await this.#_fetchfiles(
 			webDocFilesPatterns,
 			noDirPatterns,
 			fileSearchBasePath,

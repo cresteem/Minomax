@@ -1,14 +1,22 @@
 import { extname } from "node:path";
-import { ConfigurationOptions, HtmlOptions } from "../../types";
-import { calculateBatchSize, currentTime } from "../../utils";
+import {
+	BatchSizeType,
+	ConfigurationOptions,
+	HtmlOptions,
+} from "../../types";
+import { currentTime } from "../../utils";
 import Minifier from "./minifier";
 import SelectorsMangler from "./selector-mangler/renamer";
 
 export default class WebDocsWorker {
 	#destPath: string;
 	#htmloptions: HtmlOptions;
+	#batchSizes: BatchSizeType;
 
-	constructor(configurations: ConfigurationOptions) {
+	constructor(
+		configurations: ConfigurationOptions,
+		batchSizes: BatchSizeType,
+	) {
 		const {
 			destPath,
 			webdoc: { htmloptions },
@@ -16,6 +24,7 @@ export default class WebDocsWorker {
 
 		this.#destPath = destPath;
 		this.#htmloptions = htmloptions;
+		this.#batchSizes = batchSizes;
 	}
 
 	async uglify({
@@ -36,7 +45,9 @@ export default class WebDocsWorker {
 			`\n[${currentTime()}] +++> ⏰ Web Docs minification started.`,
 		);
 
-		const selectorsMangler = new SelectorsMangler();
+		const selectorsMangler = new SelectorsMangler({
+			batchSizes: this.#batchSizes,
+		});
 		const mangledFiles: Awaited<string[]> =
 			await selectorsMangler.renameSelectors(
 				webDocFilesPatterns,
@@ -45,7 +56,7 @@ export default class WebDocsWorker {
 				fileSearchBasePath,
 			);
 
-		const batchSize: number = calculateBatchSize({ perProcMem: 400 });
+		const minifierBatchSize: number = this.#batchSizes.cPer;
 		const minifier = new Minifier({ htmloptions: this.#htmloptions });
 
 		/* dumpRunTimeData({ data: mangledFiles, context: "Mangled files" }); */
@@ -55,7 +66,11 @@ export default class WebDocsWorker {
 			const webdocs: string[] = mangledFiles.filter(
 				(file) => extname(file) === extension,
 			);
-			await minifier.minify(webdocs, extension.slice(1) as any, batchSize);
+			await minifier.minify(
+				webdocs,
+				extension.slice(1) as any,
+				minifierBatchSize,
+			);
 		}
 
 		console.log(`[${currentTime()}] +++> ✅ Web docs were minified.`);

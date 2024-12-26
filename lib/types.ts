@@ -184,8 +184,8 @@ export interface ImageTagsRecord {
 
 export interface SrcRecordType {
 	imgTagReference: string;
-	imageLink: string;
-	id: string | undefined;
+	imageLink: string | false;
+	id: string | false;
 	classes: string[];
 	imageSizes: ImageSizeResponse;
 	attributes: Record<string, string> | undefined;
@@ -264,4 +264,8 @@ export type ImageSizeResponse = Record<
 export interface ThumbnailMakerResponse {
 	thumbnailPath: string;
 	videoPath: string;
+}
+
+export interface BatchSizeType {
+	cPer: number;
 }

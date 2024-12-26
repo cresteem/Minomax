@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
-import { cpus } from "node:os";
 import { basename, dirname, extname, join, relative } from "node:path";
 import { ImagePool } from "remige";
 import { optimize } from "svgo";
 
 import {
 	AvifEncodeOptions,
+	BatchSizeType,
 	ConfigurationOptions,
 	ImageWorkerOutputTypes,
 	JpgEncodeOptions,
@@ -24,21 +24,17 @@ import {
 
 class _SVGWorker {
 	#svgOptions: SvgOptions;
+	#batchSize: number;
 
-	constructor({ svgOptions }: { svgOptions: SvgOptions }) {
+	constructor({
+		svgOptions,
+		batchSize,
+	}: {
+		svgOptions: SvgOptions;
+		batchSize: number;
+	}) {
 		this.#svgOptions = svgOptions;
-	}
-
-	async #_svgBatchHandler(
-		outputPromises: (() => Promise<void>)[],
-	): Promise<void> {
-		const batchSize: number = Math.floor((cpus().length * 80) / 100);
-
-		await batchProcess({
-			promisedProcs: outputPromises,
-			batchSize: batchSize,
-			context: "SVG Optimizer",
-		});
+		this.#batchSize = batchSize;
 	}
 
 	async optimise(
@@ -93,17 +89,20 @@ class _SVGWorker {
 				}),
 		);
 
-		try {
-			await this.#_svgBatchHandler(outputPromises);
-			progressBar.stop();
-		} catch (err: any) {
-			terminate({ reason: "Error while batch processing\n" + err });
-		}
+		await batchProcess({
+			promisedProcs: outputPromises,
+			batchSize: this.#batchSize,
+			context: "SVG Optimizer",
+		});
 	}
 }
 
 class _RasterizedImageWorker {
-	constructor() {}
+	#threadCount: number;
+
+	constructor({ threadCount }: { threadCount: number }) {
+		this.#threadCount = threadCount;
+	}
 
 	#_writeBinaryImage(
 		encodeResult: Record<string, any>,
@@ -163,11 +162,7 @@ class _RasterizedImageWorker {
 		const progressBar = initProgressBar({ context: "Encoding Images" });
 		progressBar.start(imagePaths.length, 0);
 
-		//number of concurrent process.
-		/* 70 percentage of core count If there is no cpu allocation in Settings */
-		const threadCount: number = Math.floor((70 * cpus().length) / 100);
-
-		const pool = new ImagePool(threadCount);
+		const pool = new ImagePool(this.#threadCount);
 
 		/* Ingest images in pool */
 		const imagesRecords: {
@@ -243,8 +238,12 @@ export default class ImageWorker {
 	#svgOptions: SvgOptions;
 
 	#destPath: string;
+	#batchSizes: BatchSizeType;
 
-	constructor(configurations: ConfigurationOptions) {
+	constructor(
+		configurations: ConfigurationOptions,
+		batchSizes: BatchSizeType,
+	) {
 		const {
 			encodeOptions: {
 				jpgEncodeOptions,
@@ -261,6 +260,7 @@ export default class ImageWorker {
 		this.#svgOptions = svgOptions;
 
 		this.#destPath = destPath;
+		this.#batchSizes = batchSizes;
 	}
 
 	async encode(
@@ -290,6 +290,7 @@ export default class ImageWorker {
 			try {
 				await new _SVGWorker({
 					svgOptions: this.#svgOptions,
+					batchSize: this.#batchSizes.cPer,
 				}).optimise(imagePaths, destinationBasePath);
 
 				console.log(
@@ -320,11 +321,9 @@ export default class ImageWorker {
 
 			try {
 				//encoding for jpg/avif/webp
-				await new _RasterizedImageWorker().encode(
-					imagePaths,
-					encodeOptions as any,
-					destinationBasePath,
-				);
+				await new _RasterizedImageWorker({
+					threadCount: this.#batchSizes.cPer,
+				}).encode(imagePaths, encodeOptions as any, destinationBasePath);
 
 				console.log(
 					`\n[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,
