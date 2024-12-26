@@ -148,7 +148,6 @@ interface encodeOptions {
 	webpEncodeOptions: WebpEncodeOptions;
 	avifEncodeOptions: AvifEncodeOptions;
 	svgOptions: SvgOptions;
-	cpuAllocation: number;
 }
 
 export interface HtmlOptions {

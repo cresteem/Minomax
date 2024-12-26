@@ -2,7 +2,6 @@ import { ConfigurationOptions } from "./lib/types";
 
 const defaultConfig: ConfigurationOptions = {
 	encodeOptions: {
-		cpuAllocation: 10,
 		jpgEncodeOptions: {
 			mozjpeg: {
 				quality: 60,

@@ -23,24 +23,16 @@ import {
 } from "../utils";
 
 class _SVGWorker {
-	#cpuAllocation: number;
 	#svgOptions: SvgOptions;
 
-	constructor({
-		cpuAllocation,
-		svgOptions,
-	}: {
-		cpuAllocation: number;
-		svgOptions: SvgOptions;
-	}) {
+	constructor({ svgOptions }: { svgOptions: SvgOptions }) {
 		this.#svgOptions = svgOptions;
-		this.#cpuAllocation = cpuAllocation;
 	}
 
 	async #_svgBatchHandler(
 		outputPromises: (() => Promise<void>)[],
 	): Promise<void> {
-		const batchSize: number = this.#cpuAllocation * 4;
+		const batchSize: number = Math.floor((cpus().length * 80) / 100);
 
 		await batchProcess({
 			promisedProcs: outputPromises,
@@ -111,11 +103,7 @@ class _SVGWorker {
 }
 
 class _RasterizedImageWorker {
-	#cpuAllocation: number;
-
-	constructor({ cpuAllocation }: { cpuAllocation: number }) {
-		this.#cpuAllocation = cpuAllocation;
-	}
+	constructor() {}
 
 	#_writeBinaryImage(
 		encodeResult: Record<string, any>,
@@ -177,8 +165,7 @@ class _RasterizedImageWorker {
 
 		//number of concurrent process.
 		/* 70 percentage of core count If there is no cpu allocation in Settings */
-		const threadCount: number =
-			this.#cpuAllocation || Math.floor((70 * cpus().length) / 100);
+		const threadCount: number = Math.floor((70 * cpus().length) / 100);
 
 		const pool = new ImagePool(threadCount);
 
@@ -255,7 +242,6 @@ export default class ImageWorker {
 	#avifEncodeOptions: AvifEncodeOptions;
 	#svgOptions: SvgOptions;
 
-	#cpuAllocation: number;
 	#destPath: string;
 
 	constructor(configurations: ConfigurationOptions) {
@@ -265,7 +251,6 @@ export default class ImageWorker {
 				webpEncodeOptions,
 				avifEncodeOptions,
 				svgOptions,
-				cpuAllocation,
 			},
 			destPath,
 		} = configurations;
@@ -275,7 +260,6 @@ export default class ImageWorker {
 		this.#avifEncodeOptions = avifEncodeOptions;
 		this.#svgOptions = svgOptions;
 
-		this.#cpuAllocation = cpuAllocation;
 		this.#destPath = destPath;
 	}
 
@@ -305,7 +289,6 @@ export default class ImageWorker {
 		if (targetFormat === "svg") {
 			try {
 				await new _SVGWorker({
-					cpuAllocation: this.#cpuAllocation,
 					svgOptions: this.#svgOptions,
 				}).optimise(imagePaths, destinationBasePath);
 
@@ -337,9 +320,11 @@ export default class ImageWorker {
 
 			try {
 				//encoding for jpg/avif/webp
-				await new _RasterizedImageWorker({
-					cpuAllocation: this.#cpuAllocation,
-				}).encode(imagePaths, encodeOptions as any, destinationBasePath);
+				await new _RasterizedImageWorker().encode(
+					imagePaths,
+					encodeOptions as any,
+					destinationBasePath,
+				);
 
 				console.log(
 					`\n[${currentTime()}] ===> ✅ Images are optimised with ${targetFormat.toUpperCase()} format.`,

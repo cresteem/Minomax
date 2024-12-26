@@ -254,7 +254,7 @@ export default class ImgTagTransformer {
 		htmlsRecords,
 		variableImgFormat,
 		destinationBase = "dist",
-		batchSize = 10 /* Read and write only */,
+		batchSize /* Read and write only */,
 	}: {
 		htmlsRecords: ImageTagsRecord[];
 		variableImgFormat: ImageWorkerOutputTypes | false;
