@@ -46,7 +46,7 @@ export default class Minifier {
 		return new Promise((resolve, reject) => {
 			try {
 				const { code } = lightningcss({
-					filename: "dummyname[input].css",
+					filename: "dummyname.input.css",
 					code: Buffer.from(content),
 					minify: true,
 				});

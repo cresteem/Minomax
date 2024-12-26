@@ -135,7 +135,7 @@ export default class VideoWorker {
 	}): Promise<void> {
 		const outputFramePath: string = join(
 			basepath,
-			relative(".", dirname(videoPath)),
+			relative(process.cwd(), dirname(videoPath)),
 			"thumbnails",
 		);
 		const filename: string =

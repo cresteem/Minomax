@@ -99,7 +99,7 @@ export function logNotifier(): void {
 		console.log(
 			red(
 				`\nCheck ${greenBright.bold(
-					relative(".", logPath),
+					relative(process.cwd(), logPath),
 				)}, for passive ⚠️\twarnings and ❌ errors`,
 			),
 		);

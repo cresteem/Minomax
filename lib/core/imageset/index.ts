@@ -267,7 +267,7 @@ export default class ImageSetGenerator {
 		//available image and video list
 		return {
 			transformedHtmlFiles: htmlFiles.map((htmlPath) =>
-				join(destinationBase, relative(".", htmlPath)),
+				join(destinationBase, relative(process.cwd(), htmlPath)),
 			),
 			linkedImages: Object.values(imageSetPaths)
 				.map((set) => Object.values(set))

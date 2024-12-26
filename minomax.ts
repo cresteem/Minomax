@@ -174,6 +174,7 @@ export class Minomax {
 			ignore: ignorePatterns,
 			cwd: destinationBasePath, //taking only generated images
 			absolute: true,
+			nodir: true,
 		});
 		if (svgFiles.length) {
 			await this.#imageWorker.encode(
@@ -347,7 +348,10 @@ export class Minomax {
 									}
 
 									if (existsSync(videoPath)) {
-										result[videoPath] = relative(".", thumbnailPath);
+										result[videoPath] = relative(
+											process.cwd(),
+											thumbnailPath,
+										);
 									} else {
 										logWriter(`⭕ Skipping video: ${videoPath}`);
 									}
