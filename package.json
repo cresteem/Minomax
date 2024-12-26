@@ -17,7 +17,7 @@
 	],
 	"preferGlobal": true,
 	"bin": {
-		"minomax": "./dist/bin/cli.js"
+		"minomax": "./dist/bin/cli-wrapper.js"
 	},
 	"repository": {
 		"url": "https://github.com/cresteem/minomax"
