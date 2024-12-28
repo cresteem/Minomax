@@ -16,19 +16,12 @@ export default class WebDocsWorker {
 	}
 
 	async uglify({
-		webDocFilesPatterns,
-		fileSearchBasePath,
+		webDocs,
 		destinationBase,
-		noDirPatterns = [],
 	}: {
-		webDocFilesPatterns: string[];
-		fileSearchBasePath: string;
+		webDocs: string[];
 		destinationBase: string;
-		noDirPatterns: string[];
 	}): Promise<void> {
-		/* default exclude patterns */
-		noDirPatterns.push(...["./node_modules/**", destinationBase + "/**"]);
-
 		console.log(
 			`\n[${currentTime()}] +++> ⏰ Web Docs minification started.`,
 		);
@@ -37,12 +30,10 @@ export default class WebDocsWorker {
 			batchSizes: this.#batchSizes,
 		});
 		const mangledFiles: Awaited<string[]> =
-			await selectorsMangler.renameSelectors(
-				webDocFilesPatterns,
-				destinationBase,
-				noDirPatterns,
-				fileSearchBasePath,
-			);
+			await selectorsMangler.renameSelectors({
+				webDocs: webDocs,
+				destinationBase: destinationBase,
+			});
 
 		const minifierBatchSize: number = this.#batchSizes.cPer;
 		const minifier = new Minifier({ htmloptions: this.#htmloptions });

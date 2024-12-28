@@ -1,12 +1,10 @@
 import { AtRule, Comment, parse, Rule } from "css";
-import { globSync } from "glob";
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import {
 	BatchSizeType,
 	SelectorExtractorResponse,
 	UniqueSelectorsResponse,
-	WebDocFileListerResponse,
 } from "../../../types";
 import { batchProcess, terminate } from "../../../utils";
 
@@ -17,24 +15,7 @@ export default class SelectorsExtractor {
 		this.#batchSizes = batchSizes;
 	}
 
-	async #_fetchfiles(
-		webDocFilesPatterns: string[],
-		noDirPatterns: string[],
-		fileSearchBasePath: string,
-	): Promise<WebDocFileListerResponse> {
-		const webDocFiles: string[] = globSync(webDocFilesPatterns, {
-			ignore: noDirPatterns,
-			cwd: fileSearchBasePath,
-			absolute: true,
-			nodir: true,
-		});
-
-		/* dumpRunTimeData({ data: webDocFiles, context: "Webdoc Files" }); */
-
-		const cssFiles: string[] = webDocFiles.filter(
-			(file) => extname(file) === ".css",
-		);
-
+	async #_getCSSContent(cssFiles: string[]) {
 		const cssContentPromises: (() => Promise<string>)[] = cssFiles.map(
 			(cssFile: string) => () =>
 				new Promise((resolve, reject) => {
@@ -54,10 +35,7 @@ export default class SelectorsExtractor {
 
 		const cssContents: string = batchResponse.join("\n");
 
-		return {
-			cssContents: cssContents,
-			webDocFiles: webDocFiles,
-		};
+		return cssContents;
 	}
 
 	//  to extract unique class names and IDs
@@ -116,19 +94,13 @@ export default class SelectorsExtractor {
 		return Array.from(uniqueCleanSelectors);
 	}
 
-	async selectorExtractor({
-		webDocFilesPatterns,
-		noDirPatterns,
-		fileSearchBasePath,
-	}: {
-		webDocFilesPatterns: string[];
-		noDirPatterns: string[];
-		fileSearchBasePath: string;
-	}): Promise<SelectorExtractorResponse> {
-		const { webDocFiles, cssContents } = await this.#_fetchfiles(
-			webDocFilesPatterns,
-			noDirPatterns,
-			fileSearchBasePath,
+	async selectorExtractor(
+		webDocFiles: string[],
+	): Promise<SelectorExtractorResponse> {
+		const cssContents: string = await this.#_getCSSContent(
+			webDocFiles.filter(
+				(filePath: string) => extname(filePath) === ".css",
+			),
 		);
 
 		const cssRules: (Rule | Comment | AtRule)[] | false =

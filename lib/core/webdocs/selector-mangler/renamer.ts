@@ -240,20 +240,16 @@ export default class SelectorsMangler {
 		return nameRecords;
 	}
 
-	async #_makeNewNames(
-		webDocFilesPatterns: string[],
-		noDirPatterns: string[],
-		fileSearchBasePath: string,
+	async #_makeNewNames({
+		webDocs,
+	}: {
+		webDocs: string[];
 		/* map: boolean = false, */
-	): Promise<NewNamesMakerResponse> {
+	}): Promise<NewNamesMakerResponse> {
 		const { uniqueIds, uniqueClassNames, webDocFiles } =
 			await new SelectorsExtractor({
 				batchSizes: this.#batchSizes,
-			}).selectorExtractor({
-				webDocFilesPatterns: webDocFilesPatterns,
-				noDirPatterns: noDirPatterns,
-				fileSearchBasePath: fileSearchBasePath,
-			});
+			}).selectorExtractor(webDocs);
 
 		const newClassNameRecords: Record<string, string> =
 			this.#_newNameAssigner(uniqueClassNames);
@@ -298,16 +294,15 @@ export default class SelectorsMangler {
 	}
 
 	//it write new selectors to web resources (js, html, css).
-	async renameSelectors(
-		webDocFilesPatterns: string[],
-		destinationBase: string,
-		noDirPatterns: string[],
-		fileSearchBasePath: string,
-	): Promise<string[]> {
+	async renameSelectors({
+		webDocs,
+		destinationBase,
+	}: {
+		webDocs: string[];
+		destinationBase: string;
+	}): Promise<string[]> {
 		const { newSelectorsRecords, webDocFiles } = await this.#_makeNewNames(
-			webDocFilesPatterns,
-			noDirPatterns,
-			fileSearchBasePath,
+			{ webDocs: webDocs },
 		);
 
 		const progressBar = initProgressBar({ context: "Renaming Selectors" });

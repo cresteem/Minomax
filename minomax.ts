@@ -1,8 +1,7 @@
-import { globSync } from "glob";
 import { existsSync, rmSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { cpus } from "node:os";
-import { relative, sep } from "node:path";
+import { extname, relative, sep } from "node:path";
 import configurations from "./configLoader";
 import ImageWorker from "./lib/core/image";
 import ImageSetGenerator from "./lib/core/imageset";
@@ -22,6 +21,7 @@ import {
 	copyFiles,
 	currentTime,
 	deleteOldLogs,
+	getAvailableFiles,
 	initProgressBar,
 	logNotifier,
 	logWriter,
@@ -73,24 +73,20 @@ export class Minomax {
 		},
 		videoWorkerParams = this.configurations.videoWorker.encoding,
 		ignorePatterns = this.configurations.ignorePatterns,
-		webDocFilesPatterns = this.configurations.lookUpPatterns.webDoc,
+		webDocLookUpPatterns = this.configurations.lookUpPatterns.webDoc,
+		destinationBasePath = this.configurations.destPath,
 		removeOld = this.configurations.removeOld,
 	}: {
 		imageWorkerParams?: ImageWorkerParamsMain;
 		videoWorkerParams?: VideoWorkerParamsMain;
 		ignorePatterns?: string[];
-		webDocFilesPatterns?: string[];
+		webDocLookUpPatterns?: string[];
+		destinationBasePath?: string;
 		removeOld?: boolean;
 	}) {
 		this.#beforeAll();
 
-		const destinationBasePath = this.configurations.destPath;
-
-		ignorePatterns = [
-			...ignorePatterns,
-			"node_modules/**",
-			`${destinationBasePath}/**`,
-		];
+		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
 
 		const { targetFormat } = imageWorkerParams;
 
@@ -101,11 +97,12 @@ export class Minomax {
 		}
 
 		/* II- Copy webdoc files to dest path */
-		const webDocFiles: string[] = globSync(webDocFilesPatterns, {
-			ignore: ignorePatterns,
-			absolute: true,
-			nodir: true,
+		const webDocFiles: string[] = await getAvailableFiles({
+			lookUpPattern: webDocLookUpPatterns,
+			ignorePattern: ignorePatterns,
+			context: "WebDoc files at minomax()",
 		});
+
 		if (webDocFiles.length) {
 			await copyFiles(
 				webDocFiles,
@@ -115,21 +112,21 @@ export class Minomax {
 		}
 
 		// Step:2
-		const htmlPathPatterns: string[] = [...webDocFilesPatterns].filter(
-			(pattern: string) => pattern.endsWith(".html"),
+		const htmlFiles: string[] = webDocFiles.filter(
+			(filePath) => extname(filePath) === ".html",
 		);
 
-		if (htmlPathPatterns.length === 0) {
+		if (htmlFiles.length === 0) {
 			terminate({
-				reason: "HTML pattern not found in lookupPattern, parameter",
+				reason: "HTML files not found with given lookupPattern",
 			});
 		}
+
 		// 2.I) Image set generation & Img tag transformation,
 		const { linkedImages, transformedHtmlFiles } =
 			await this.#imageGenerator.generate({
-				htmlPathPatterns: htmlPathPatterns,
+				htmlFiles: htmlFiles,
 				destinationBase: destinationBasePath,
-				ignorePatterns: ignorePatterns,
 				variableImgFormat: targetFormat,
 			});
 
@@ -149,7 +146,7 @@ export class Minomax {
 			const videoEncodeLevel: 1 | 2 | 3 = encodeLevel || 3;
 
 			await this.#videoWorker.encode(
-				Array.from(availableVideos),
+				availableVideos,
 				codecType,
 				videoEncodeLevel,
 				destinationBasePath,
@@ -160,7 +157,7 @@ export class Minomax {
 		const compressedImagesDestination: string = process.cwd(); //overwriting uncompressed images with compressed
 
 		/* I) Standard pictures */
-		const imagePaths = [...linkedImages, ...thumbnails];
+		const imagePaths = linkedImages.concat(thumbnails);
 		if (imagePaths.length) {
 			await this.#imageWorker.encode(
 				imagePaths,
@@ -170,12 +167,14 @@ export class Minomax {
 		}
 
 		/* II) SVG images */
-		const svgFiles: string[] = globSync(["**/*.svg"], {
-			ignore: ignorePatterns,
-			cwd: destinationBasePath, //taking only generated images
-			absolute: true,
-			nodir: true,
+		const svgLookUpPattern: string[] = ["**/*.svg"]; //taking only generated images
+		const svgFiles: string[] = await getAvailableFiles({
+			lookUpPattern: svgLookUpPattern,
+			ignorePattern: ignorePatterns,
+			context: "SVG Files at minomax()",
+			basePath: destinationBasePath,
 		});
+
 		if (svgFiles.length) {
 			await this.#imageWorker.encode(
 				svgFiles,
@@ -187,11 +186,17 @@ export class Minomax {
 		// Step:5 Webdoc worker - minify HTML, JS & CSS
 		const fileSearchBasePath: string = destinationBasePath; //as files were copied to destpath
 		const minifiedWebDocsDestination: string = process.cwd(); //overwriting non-minified with minified files
+
+		const destinatedWebDocs: string[] = await getAvailableFiles({
+			lookUpPattern: webDocLookUpPatterns,
+			basePath: fileSearchBasePath,
+			ignorePattern: ignorePatterns,
+			context: "webdocs at minomax()",
+		});
+
 		await this.#webDocWorker.uglify({
-			webDocFilesPatterns: webDocFilesPatterns,
+			webDocs: destinatedWebDocs,
 			destinationBase: minifiedWebDocsDestination,
-			fileSearchBasePath: fileSearchBasePath,
-			noDirPatterns: ignorePatterns,
 		});
 
 		this.#afterAll();
@@ -210,16 +215,12 @@ export class Minomax {
 	}) {
 		this.#beforeAll();
 
-		ignorePatterns = [
-			...ignorePatterns,
-			"node_modules/**",
-			`${destinationBasePath}/**`,
-		];
+		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
 
-		const imagesFiles: string[] = globSync(lookUpPatterns, {
-			ignore: ignorePatterns,
-			absolute: true,
-			nodir: true,
+		const imagesFiles: string[] = await getAvailableFiles({
+			lookUpPattern: lookUpPatterns,
+			ignorePattern: ignorePatterns,
+			context: "Image Files at compressImages()",
 		});
 
 		try {
@@ -251,16 +252,12 @@ export class Minomax {
 	}) {
 		this.#beforeAll();
 
-		ignorePatterns = [
-			...ignorePatterns,
-			"node_modules/**",
-			`${destinationBasePath}/**`,
-		];
+		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
 
-		const videoFiles: string[] = globSync(lookUpPatterns, {
-			ignore: ignorePatterns,
-			absolute: true,
-			nodir: true,
+		const videoFiles: string[] = await getAvailableFiles({
+			lookUpPattern: lookUpPatterns,
+			ignorePattern: ignorePatterns,
+			context: "Video Files at compressVideos()",
 		});
 
 		try {
@@ -302,12 +299,13 @@ export class Minomax {
 			});
 		}
 
+		ignorePatterns = [...ignorePatterns, `${destinationBase}/**`];
+
 		if (htmlLookupPattern) {
-			htmlFiles = globSync(htmlLookupPattern, {
-				absolute: true,
-				cwd: process.cwd(),
-				nodir: true,
-				ignore: ignorePatterns,
+			htmlFiles = await getAvailableFiles({
+				lookUpPattern: htmlLookupPattern,
+				ignorePattern: ignorePatterns,
+				context: "HTML Files at makeVideoThumbnail()",
 			});
 		}
 
@@ -444,12 +442,17 @@ export class Minomax {
 			`${destinationBasePath}/**`,
 		];
 
+		const webDocs: string[] = await getAvailableFiles({
+			lookUpPattern: lookUpPatterns,
+			basePath: lookUpBasePath,
+			ignorePattern: ignorePatterns,
+			context: "webdocs at minifyWebDocs()",
+		});
+
 		try {
 			await this.#webDocWorker.uglify({
-				webDocFilesPatterns: lookUpPatterns,
+				webDocs: webDocs,
 				destinationBase: destinationBasePath,
-				fileSearchBasePath: lookUpBasePath,
-				noDirPatterns: ignorePatterns,
 			});
 		} catch (err) {
 			console.error("❌ Unexpected error while minifying WebDocs.", err);
@@ -476,11 +479,16 @@ export class Minomax {
 			`${destinationBasePath}/**`,
 		];
 
+		const htmlFiles: string[] = await getAvailableFiles({
+			lookUpPattern: lookUpPatterns,
+			ignorePattern: ignorePatterns,
+			context: "Html Files at generateImageSets()",
+		});
+
 		try {
 			await this.#imageGenerator.generate({
-				htmlPathPatterns: lookUpPatterns,
+				htmlFiles: htmlFiles,
 				destinationBase: destinationBasePath,
-				ignorePatterns: ignorePatterns,
 				variableImgFormat: false,
 			});
 		} catch (err) {

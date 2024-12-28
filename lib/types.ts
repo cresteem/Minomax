@@ -234,11 +234,6 @@ export interface UpscalerResponse {
 	upscaledBaseimageWidth: number;
 }
 
-export interface WebDocFileListerResponse {
-	cssContents: string;
-	webDocFiles: string[];
-}
-
 export interface UniqueSelectorsResponse {
 	uniqueClassNames: string[];
 	uniqueIds: string[];

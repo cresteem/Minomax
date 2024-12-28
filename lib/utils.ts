@@ -1,5 +1,6 @@
 import { greenBright, red, yellowBright } from "ansi-colors";
 import { Presets, SingleBar } from "cli-progress";
+import { glob } from "glob";
 import {
 	appendFileSync,
 	existsSync,
@@ -185,4 +186,35 @@ export function dumpRunTimeData({
 	} catch (err) {
 		console.error("Error dumping runtime data for", context);
 	}
+}
+
+export function getAvailableFiles({
+	lookUpPattern,
+	context,
+	ignorePattern = [],
+	basePath = process.cwd(),
+}: {
+	lookUpPattern: string[];
+	context: string;
+	ignorePattern?: string[];
+	basePath?: string;
+}): Promise<string[]> {
+	ignorePattern = Array.from(
+		new Set([...ignorePattern, "node_modules/**"]),
+	);
+
+	return new Promise((resolve, reject) => {
+		glob(lookUpPattern, {
+			ignore: ignorePattern,
+			cwd: basePath,
+			absolute: true,
+			nodir: true,
+		})
+			.then(resolve)
+			.catch((err) => {
+				reject(
+					`Error getting available files, Context: ${context}\n ${err}`,
+				);
+			});
+	});
 }

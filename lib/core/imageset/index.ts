@@ -1,5 +1,3 @@
-import { globSync } from "glob";
-
 import { existsSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
@@ -163,25 +161,17 @@ export default class ImageSetGenerator {
 	 *@param_2 - destination {String} => file destination =require( root to make all outputs.
 	 */
 	async generate({
-		htmlPathPatterns,
-		ignorePatterns,
+		htmlFiles,
 		destinationBase,
 		variableImgFormat,
 	}: {
+		htmlFiles: string[];
 		variableImgFormat: ImageWorkerOutputTypes | false;
-		htmlPathPatterns: string[];
-		ignorePatterns: string[];
 		destinationBase: string;
 	}): Promise<{ linkedImages: string[]; transformedHtmlFiles: string[] }> {
 		const pupeeterBatchSize: number = getFreeMemBatchSize({
 			memPerProc: 2000,
 			cPerBatchSize: this.#batchSizes.cPer,
-		});
-
-		const htmlFiles: string[] = globSync(htmlPathPatterns, {
-			ignore: ignorePatterns,
-			absolute: true,
-			nodir: true,
 		});
 
 		console.log(
