@@ -124,13 +124,20 @@ export interface SvgOptions {
 	plugins: Partial<svgoPlugings>[];
 }
 
-type ScreenSizesConstants = "1X" | "2X" | "3X" | "4X" | "5X" | "6X";
+type ScreenSizesConstants =
+	| "xs"
+	| "sm"
+	| "md"
+	| "lg"
+	| "xl"
+	| "xxl"
+	| "xxxl";
 
 export type ScreenSizesRecordType = Partial<
 	Record<ScreenSizesConstants, number>
 >;
 
-export type UpscaleLevels = "level1" | "level2" | "level3";
+export type UpscaleLevels = 1 | 2 | 3;
 
 export interface ImageSetConfigurations {
 	/* 
@@ -143,11 +150,12 @@ export interface ImageSetConfigurations {
 	upscaleLevel: UpscaleLevels;
 }
 
-interface encodeOptions {
+export interface ImageEncodeOptions {
 	jpgEncodeOptions: JpgEncodeOptions;
 	webpEncodeOptions: WebpEncodeOptions;
 	avifEncodeOptions: AvifEncodeOptions;
 	svgOptions: SvgOptions;
+	targetType: ImageWorkerOutputTypes;
 }
 
 export interface HtmlOptions {
@@ -164,18 +172,28 @@ export interface HtmlOptions {
 	removeTagWhitespace: boolean;
 }
 
-export interface ConfigurationOptions {
-	encodeOptions: encodeOptions;
-	imageSetConfigurations: ImageSetConfigurations;
-	destPath: string;
-	webdoc: { htmloptions: HtmlOptions; lookupPatterns: string[] };
-	removeOld: boolean;
-	ignorePatterns: string[];
-	imagePatterns: string[];
-	videoLookupPatterns: string[];
+export interface WebDocOptions {
+	htmloptions: HtmlOptions;
 }
 
 export type ImageWorkerOutputTypes = "jpg" | "avif" | "webp" | "svg";
+
+export interface ConfigurationOptions {
+	imageWorker: {
+		encoding: ImageEncodeOptions;
+		set: ImageSetConfigurations;
+	};
+	videoWorker: { encoding: VideoWorkerParamsMain };
+	webDoc: WebDocOptions;
+	ignorePatterns: string[];
+	lookUpPatterns: {
+		image: string[];
+		video: string[];
+		webDoc: string[];
+	};
+	destPath: string;
+	removeOld: boolean;
+}
 
 export interface ImageTagsRecord {
 	htmlFile: string;
@@ -190,14 +208,6 @@ export interface SrcRecordType {
 	imageSizes: ImageSizeResponse;
 	attributes: Record<string, string> | undefined;
 }
-
-/* export interface ImageAttributes {
-	id: string;
-	class: string;
-	alt: string;
-	loading: string;
-	style: string;
-} */
 
 export interface PictureTagMakerResponse {
 	imgTagReference: string;
@@ -234,9 +244,8 @@ export interface UniqueSelectorsResponse {
 	uniqueIds: string[];
 }
 
-export interface SelectorExtractorResponse {
-	uniqueClassNames: string[];
-	uniqueIds: string[];
+export interface SelectorExtractorResponse
+	extends UniqueSelectorsResponse {
 	webDocFiles: string[];
 }
 
@@ -250,10 +259,11 @@ export interface ImageWorkerParamsMain {
 }
 
 export type CodecType = "wav1" | "mav1" | "mx265";
+export type VideoEncodeLevels = 1 | 2 | 3;
 
 export interface VideoWorkerParamsMain {
 	codecType: CodecType;
-	encodeLevel?: 1 | 2 | 3;
+	encodeLevel: VideoEncodeLevels;
 }
 
 export type ImageSizeResponse = Record<

@@ -17,7 +17,6 @@ import { CheerioAPI, load } from "cheerio/slim";
 import {
 	BatchSizeType,
 	CodecType,
-	ConfigurationOptions,
 	ImageWorkerOutputTypes,
 } from "../../lib/types";
 import {
@@ -30,17 +29,12 @@ import {
 } from "../utils";
 
 export default class VideoWorker {
-	#destPath: string;
 	#batchSizes: BatchSizeType;
 
-	constructor(
-		configuration: ConfigurationOptions,
-		batchSizes: BatchSizeType,
-	) {
+	constructor(batchSizes: BatchSizeType) {
 		ffmpeg.setFfmpegPath(ffmpegIns.path);
 		ffmpeg.setFfprobePath(ffprobeIns.path);
 
-		this.#destPath = configuration.destPath;
 		this.#batchSizes = batchSizes;
 	}
 
@@ -185,7 +179,7 @@ export default class VideoWorker {
 		videoPaths: string[],
 		codecType: "wav1" | "mav1" | "mx265" = "wav1",
 		encodeLevel: 1 | 2 | 3 = 1,
-		basepath: string = this.#destPath,
+		basepath: string,
 	) {
 		videoPaths = Array.from(new Set(videoPaths)); //keep unique videos path
 

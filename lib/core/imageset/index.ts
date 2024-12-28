@@ -5,7 +5,7 @@ import { extname, join, relative } from "node:path";
 
 import {
 	BatchSizeType,
-	ConfigurationOptions,
+	ImageSetConfigurations,
 	ImageSetGenRecord,
 	ImageTagsRecord,
 	ImageWorkerOutputTypes,
@@ -26,16 +26,18 @@ import ImgTagTransformer from "./imageset.lib/transformer";
 
 export default class ImageSetGenerator {
 	#imgTagTransformer: ImgTagTransformer;
-	#configurations: ConfigurationOptions;
+	#imageSetConfigurations: ImageSetConfigurations;
 	#batchSizes: BatchSizeType;
 
 	constructor(
-		configurations: ConfigurationOptions,
+		imageSetConfigurations: ImageSetConfigurations,
 		batchSizes: BatchSizeType,
 	) {
-		this.#imgTagTransformer = new ImgTagTransformer(configurations);
-		this.#configurations = configurations;
+		this.#imageSetConfigurations = imageSetConfigurations;
 		this.#batchSizes = batchSizes;
+		this.#imgTagTransformer = new ImgTagTransformer(
+			this.#imageSetConfigurations.screenSizes,
+		);
 	}
 
 	#_makeImageSetMeta(
@@ -44,7 +46,7 @@ export default class ImageSetGenerator {
 		imageSetPaths: Record<string, Record<string, string>>,
 	): ImageSetGenRecord {
 		const screenKeys: string[] = Object.keys(
-			this.#configurations.imageSetConfigurations.screenSizes,
+			this.#imageSetConfigurations.screenSizes,
 		);
 
 		const imageSetMeta: Record<string, { path: string; width: number }> =
@@ -109,7 +111,7 @@ export default class ImageSetGenerator {
 					} else {
 						const rasterisedImageSetGenerator =
 							new RasterisedImageSetGenerator(
-								this.#configurations.imageSetConfigurations,
+								this.#imageSetConfigurations,
 							);
 
 						const imageSetGenPromises = Object.values(record.imageSet).map(
@@ -163,7 +165,7 @@ export default class ImageSetGenerator {
 	async generate({
 		htmlPathPatterns,
 		ignorePatterns,
-		destinationBase = this.#configurations.destPath,
+		destinationBase,
 		variableImgFormat,
 	}: {
 		variableImgFormat: ImageWorkerOutputTypes | false;
@@ -190,7 +192,7 @@ export default class ImageSetGenerator {
 
 		//making metadata for images that available in html
 		const imagesMetaofHtmls: ImageTagsRecord[] = await new HTMLParser(
-			this.#configurations,
+			this.#imageSetConfigurations.screenSizes,
 		).extractImagesMeta(htmlFiles, pupeeterBatchSize);
 
 		/* path of each images */

@@ -1,28 +1,16 @@
 import { extname } from "node:path";
-import {
-	BatchSizeType,
-	ConfigurationOptions,
-	HtmlOptions,
-} from "../../types";
+import { BatchSizeType, HtmlOptions, WebDocOptions } from "../../types";
 import { currentTime } from "../../utils";
 import Minifier from "./minifier";
 import SelectorsMangler from "./selector-mangler/renamer";
 
 export default class WebDocsWorker {
-	#destPath: string;
 	#htmloptions: HtmlOptions;
 	#batchSizes: BatchSizeType;
 
-	constructor(
-		configurations: ConfigurationOptions,
-		batchSizes: BatchSizeType,
-	) {
-		const {
-			destPath,
-			webdoc: { htmloptions },
-		} = configurations;
+	constructor(webDocOptions: WebDocOptions, batchSizes: BatchSizeType) {
+		const { htmloptions } = webDocOptions;
 
-		this.#destPath = destPath;
 		this.#htmloptions = htmloptions;
 		this.#batchSizes = batchSizes;
 	}
@@ -30,7 +18,7 @@ export default class WebDocsWorker {
 	async uglify({
 		webDocFilesPatterns,
 		fileSearchBasePath,
-		destinationBase = this.#destPath,
+		destinationBase,
 		noDirPatterns = [],
 	}: {
 		webDocFilesPatterns: string[];

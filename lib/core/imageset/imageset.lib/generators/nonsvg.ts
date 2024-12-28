@@ -7,18 +7,17 @@ import sharp from "sharp";
 
 import {
 	ImageSetConfigurations,
-	UpscaleLevels,
 	UpscalerResponse,
 } from "../../../../types";
 import { makeDirf } from "../../../../utils";
 
 export default class RasterisedImageSetGenerator {
-	#upscaleLevel: UpscaleLevels;
+	#upscaleLevel: "level1" | "level2" | "level3";
 
 	constructor(imageSetConfigurations: ImageSetConfigurations) {
 		const { upscaleLevel } = imageSetConfigurations;
 
-		this.#upscaleLevel = upscaleLevel;
+		this.#upscaleLevel = `level${upscaleLevel}`;
 	}
 
 	#_getImageWidth(imagePath: string): Promise<number> {

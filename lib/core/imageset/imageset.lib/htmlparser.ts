@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
 import {
-	ConfigurationOptions,
 	ImageTagsRecord,
 	ScreenSizesRecordType,
 	SrcRecordType,
@@ -15,11 +14,7 @@ import { getImageSizes } from "./cssrender";
 export default class HTMLParser {
 	#screenSizes: ScreenSizesRecordType;
 
-	constructor(configurations: ConfigurationOptions) {
-		const {
-			imageSetConfigurations: { screenSizes },
-		} = configurations;
-
+	constructor(screenSizes: ScreenSizesRecordType) {
 		this.#screenSizes = screenSizes;
 	}
 

@@ -9,10 +9,10 @@ import {
 	sep,
 } from "node:path";
 import {
-	ConfigurationOptions,
 	ImageTagsRecord,
 	ImageWorkerOutputTypes,
 	PictureTagMakerResponse,
+	ScreenSizesRecordType,
 	SrcRecordType,
 } from "../../../types";
 import { batchProcess, terminate, writeContent } from "../../../utils";
@@ -20,11 +20,7 @@ import { batchProcess, terminate, writeContent } from "../../../utils";
 export default class ImgTagTransformer {
 	#screenSizes;
 
-	constructor(configurations: ConfigurationOptions) {
-		const {
-			imageSetConfigurations: { screenSizes },
-		} = configurations;
-
+	constructor(screenSizes: ScreenSizesRecordType) {
 		this.#screenSizes = screenSizes;
 	}
 

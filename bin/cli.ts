@@ -68,7 +68,7 @@ program
 	)
 	.action(async (options) => {
 		await minomax.compressImages({
-			pathPatterns: options.patterns,
+			lookUpPatterns: options.patterns,
 			targetFormat: options.format,
 			destinationBasePath: options.dest,
 			ignorePatterns: options.ignore,
@@ -100,7 +100,7 @@ program
 	)
 	.action(async (options) => {
 		await minomax.compressVideos({
-			pathPatterns: options.patterns,
+			lookUpPatterns: options.patterns,
 			codecType: options.codec,
 			encodeLevel: options.encode,
 			destinationBasePath: options.dest,
@@ -132,9 +132,9 @@ program
 	)
 	.action(async (options) => {
 		await minomax.minifyWebdoc({
-			pathPatterns: options.patterns,
+			lookUpPatterns: options.patterns,
 			destinationBasePath: options.dest,
-			fileSearchBasePath: options.searchBase,
+			lookUpBasePath: options.searchBase,
 			ignorePatterns: options.ignore,
 		});
 	});
@@ -158,7 +158,7 @@ program
 	)
 	.action(async (options) => {
 		await minomax.generateImageSets({
-			pathPatterns: options.patterns,
+			lookUpPatterns: options.patterns,
 			destinationBasePath: options.dest,
 			ignorePatterns: options.ignore,
 		});

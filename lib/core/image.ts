@@ -7,7 +7,7 @@ import { optimize } from "svgo";
 import {
 	AvifEncodeOptions,
 	BatchSizeType,
-	ConfigurationOptions,
+	ImageEncodeOptions,
 	ImageWorkerOutputTypes,
 	JpgEncodeOptions,
 	SvgOptions,
@@ -237,36 +237,31 @@ export default class ImageWorker {
 	#avifEncodeOptions: AvifEncodeOptions;
 	#svgOptions: SvgOptions;
 
-	#destPath: string;
 	#batchSizes: BatchSizeType;
 
 	constructor(
-		configurations: ConfigurationOptions,
+		encodeOptions: ImageEncodeOptions,
 		batchSizes: BatchSizeType,
 	) {
 		const {
-			encodeOptions: {
-				jpgEncodeOptions,
-				webpEncodeOptions,
-				avifEncodeOptions,
-				svgOptions,
-			},
-			destPath,
-		} = configurations;
+			jpgEncodeOptions,
+			webpEncodeOptions,
+			avifEncodeOptions,
+			svgOptions,
+		} = encodeOptions;
 
 		this.#jpgEncodeOptions = jpgEncodeOptions;
 		this.#webpEncodeOptions = webpEncodeOptions;
 		this.#avifEncodeOptions = avifEncodeOptions;
 		this.#svgOptions = svgOptions;
 
-		this.#destPath = destPath;
 		this.#batchSizes = batchSizes;
 	}
 
 	async encode(
 		imagePaths: string[],
 		targetFormat: ImageWorkerOutputTypes,
-		destinationBasePath: string = this.#destPath,
+		destinationBasePath: string,
 	): Promise<void> {
 		/* dumpRunTimeData({ data: imagePaths, context: "Image Paths" }); */
 

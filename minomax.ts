@@ -14,6 +14,7 @@ import {
 	ConfigurationOptions,
 	ImageWorkerOutputTypes,
 	ImageWorkerParamsMain,
+	VideoEncodeLevels,
 	VideoWorkerParamsMain,
 } from "./lib/types";
 import {
@@ -51,33 +52,32 @@ export class Minomax {
 	constructor() {
 		this.configurations = configurations();
 
-		this.#videoWorker = new VideoWorker(
-			this.configurations,
-			this.#batchSizes,
-		);
+		this.#videoWorker = new VideoWorker(this.#batchSizes);
 		this.#imageWorker = new ImageWorker(
-			this.configurations,
+			this.configurations.imageWorker.encoding,
 			this.#batchSizes,
 		);
 		this.#imageGenerator = new ImageSetGenerator(
-			this.configurations,
+			this.configurations.imageWorker.set,
 			this.#batchSizes,
 		);
 		this.#webDocWorker = new WebDocsWorker(
-			this.configurations,
+			this.configurations.webDoc,
 			this.#batchSizes,
 		);
 	}
 
 	async minomax({
-		imageWorkerParams,
-		videoWorkerParams,
+		imageWorkerParams = {
+			targetFormat: this.configurations.imageWorker.encoding.targetType,
+		},
+		videoWorkerParams = this.configurations.videoWorker.encoding,
 		ignorePatterns = this.configurations.ignorePatterns,
-		webDocFilesPatterns = this.configurations.webdoc.lookupPatterns,
+		webDocFilesPatterns = this.configurations.lookUpPatterns.webDoc,
 		removeOld = this.configurations.removeOld,
 	}: {
-		imageWorkerParams: ImageWorkerParamsMain;
-		videoWorkerParams: VideoWorkerParamsMain;
+		imageWorkerParams?: ImageWorkerParamsMain;
+		videoWorkerParams?: VideoWorkerParamsMain;
 		ignorePatterns?: string[];
 		webDocFilesPatterns?: string[];
 		removeOld?: boolean;
@@ -198,13 +198,13 @@ export class Minomax {
 	}
 
 	async compressImages({
-		targetFormat = "webp",
-		pathPatterns = this.configurations.imagePatterns,
+		targetFormat = this.configurations.imageWorker.encoding.targetType,
+		lookUpPatterns = this.configurations.lookUpPatterns.image,
 		destinationBasePath = this.configurations.destPath,
 		ignorePatterns = this.configurations.ignorePatterns,
 	}: {
 		targetFormat?: ImageWorkerOutputTypes;
-		pathPatterns?: string[];
+		lookUpPatterns?: string[];
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
@@ -216,7 +216,7 @@ export class Minomax {
 			`${destinationBasePath}/**`,
 		];
 
-		const imagesFiles: string[] = globSync(pathPatterns, {
+		const imagesFiles: string[] = globSync(lookUpPatterns, {
 			ignore: ignorePatterns,
 			absolute: true,
 			nodir: true,
@@ -237,15 +237,15 @@ export class Minomax {
 	}
 
 	async compressVideos({
-		codecType = "mav1",
-		pathPatterns = this.configurations.videoLookupPatterns,
-		encodeLevel = 3,
+		codecType = this.configurations.videoWorker.encoding.codecType,
+		lookUpPatterns = this.configurations.lookUpPatterns.video,
+		encodeLevel = this.configurations.videoWorker.encoding.encodeLevel,
 		destinationBasePath = this.configurations.destPath,
 		ignorePatterns = this.configurations.ignorePatterns,
 	}: {
-		codecType?: "wav1" | "mav1" | "mx265";
-		pathPatterns?: string[];
-		encodeLevel?: 1 | 2 | 3;
+		codecType?: CodecType;
+		lookUpPatterns?: string[];
+		encodeLevel?: VideoEncodeLevels;
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
@@ -257,7 +257,7 @@ export class Minomax {
 			`${destinationBasePath}/**`,
 		];
 
-		const videoFiles: string[] = globSync(pathPatterns, {
+		const videoFiles: string[] = globSync(lookUpPatterns, {
 			ignore: ignorePatterns,
 			absolute: true,
 			nodir: true,
@@ -281,19 +281,19 @@ export class Minomax {
 	async makeVideoThumbnail({
 		htmlFiles,
 		htmlLookupPattern,
-		ignorePatterns = [],
+		seekPercentage = 15,
 		variableImgFormat = false,
 		videoCodec = false,
-		destinationBase = "",
-		seekPercentage = 15,
+		ignorePatterns = this.configurations.ignorePatterns,
+		destinationBase = this.configurations.destPath,
 	}: {
 		htmlFiles?: string[];
-		htmlLookupPattern?: string[] | string;
-		ignorePatterns?: string[] | string;
+		htmlLookupPattern?: string[];
+		seekPercentage?: number;
 		variableImgFormat?: ImageWorkerOutputTypes | false;
 		videoCodec?: CodecType | false;
+		ignorePatterns?: string[] | string;
 		destinationBase?: string;
-		seekPercentage?: number;
 	}): Promise<Record<string, string>> {
 		if (!htmlFiles && !htmlLookupPattern) {
 			terminate({
@@ -426,14 +426,14 @@ export class Minomax {
 	}
 
 	async minifyWebdoc({
-		pathPatterns = this.configurations.webdoc.lookupPatterns,
+		lookUpPatterns = this.configurations.lookUpPatterns.webDoc,
+		lookUpBasePath = process.cwd(),
 		destinationBasePath = this.configurations.destPath,
-		fileSearchBasePath = process.cwd(),
 		ignorePatterns = this.configurations.ignorePatterns,
 	}: {
-		pathPatterns?: string[];
+		lookUpPatterns?: string[];
+		lookUpBasePath?: string;
 		destinationBasePath?: string;
-		fileSearchBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
 		this.#beforeAll();
@@ -446,9 +446,9 @@ export class Minomax {
 
 		try {
 			await this.#webDocWorker.uglify({
-				webDocFilesPatterns: pathPatterns,
+				webDocFilesPatterns: lookUpPatterns,
 				destinationBase: destinationBasePath,
-				fileSearchBasePath: fileSearchBasePath,
+				fileSearchBasePath: lookUpBasePath,
 				noDirPatterns: ignorePatterns,
 			});
 		} catch (err) {
@@ -460,11 +460,11 @@ export class Minomax {
 	}
 
 	async generateImageSets({
-		pathPatterns = this.configurations.imagePatterns,
+		lookUpPatterns = this.configurations.lookUpPatterns.image,
 		destinationBasePath = this.configurations.destPath,
 		ignorePatterns = this.configurations.ignorePatterns,
 	}: {
-		pathPatterns?: string[];
+		lookUpPatterns?: string[];
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
 	}) {
@@ -478,7 +478,7 @@ export class Minomax {
 
 		try {
 			await this.#imageGenerator.generate({
-				htmlPathPatterns: pathPatterns,
+				htmlPathPatterns: lookUpPatterns,
 				destinationBase: destinationBasePath,
 				ignorePatterns: ignorePatterns,
 				variableImgFormat: false,
