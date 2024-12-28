@@ -117,11 +117,13 @@ const defaultConfig: ConfigurationOptions = {
 		},
 		set: {
 			screenSizes: {
-				md: 600,
-				lg: 1080,
-				xl: 1920,
-				xxl: 2560,
-				xxxl: 3840,
+				xs: 400,
+				sm: 640,
+				md: 768,
+				lg: 1024,
+				xl: 1280,
+				xxl: 1536,
+				xxxl: 3172,
 			},
 			upscaleLevel: 2,
 		},
@@ -144,10 +146,6 @@ const defaultConfig: ConfigurationOptions = {
 			removeTagWhitespace: true,
 		},
 	},
-
-	destPath: "./minomax-output",
-	removeOld: true,
-	ignorePatterns: ["node_modules/**"],
 	lookUpPatterns: {
 		webDoc: ["**/*.css", "**/*.js", "**/*.html", "**/*.htm"],
 		image: ["**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.bmp", "**/*.webp"],
@@ -161,6 +159,9 @@ const defaultConfig: ConfigurationOptions = {
 			"**/*.mov",
 		],
 	},
+	ignorePatterns: ["node_modules/**"],
+	destPath: "./minomax-output",
+	removeOld: true,
 };
 
 export default defaultConfig;
