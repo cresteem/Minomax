@@ -2540,6 +2540,11 @@ fd-slicer@~1.1.0:
   dependencies:
     pend "~1.2.0"
 
+ffmpeg-image-diff@^1.16.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/ffmpeg-image-diff/-/ffmpeg-image-diff-1.16.0.tgz#064b3d60127779f63a61d86cfe4f1983ab7f6372"
+  integrity sha512-DMMSQts+8nisdWkCOj35Rm673nwPpu4D2CcF/ppbWDuBQ3Ohnbm7yKLwJS2dHSM/uugjAh767pGlfPH6glQQhg==
+
 file-type@^3.8.0:
   version "3.9.0"
   resolved "https://registry.npmjs.org/file-type/-/file-type-3.9.0.tgz"
