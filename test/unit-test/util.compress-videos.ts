@@ -1,9 +1,14 @@
-import imgDiff from "ffmpeg-image-diff";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
+import ffmpeg from "fluent-ffmpeg";
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
+
 import { globSync } from "glob";
 import { rmSync } from "node:fs";
 import { cpus } from "node:os";
 import { basename, dirname, extname, join, relative } from "node:path";
-import { ImageWorkerOutputTypes } from "../../lib/types";
+import { CodecType, VideoEncodeLevels } from "../../lib/types";
 import { batchProcess } from "../../lib/utils";
 import { Minomax } from "../../minomax";
 import { calculateTotalSize } from "./util.base";
@@ -11,59 +16,81 @@ import { calculateTotalSize } from "./util.base";
 const minomax = new Minomax();
 const batchSize = cpus().length;
 
-async function _compareImagesSSIM(
+function _getVideoDurations(videoPath: string): Promise<number> {
+	return new Promise((resolve, reject) => {
+		ffmpeg.ffprobe(videoPath, (err, inputMeta) => {
+			if (err) {
+				reject(err);
+			}
+
+			const inputDurations = inputMeta?.format?.duration || 0;
+
+			if (!inputDurations) {
+				reject("invalid duration");
+			} else {
+				resolve(inputDurations);
+			}
+		});
+	});
+}
+
+function _compareVideoDuration(
 	inputPath: string,
 	outputPath: string,
 ): Promise<boolean> {
 	return new Promise((resolve, reject) => {
-		imgDiff(inputPath, outputPath)
-			.then((ssim) => {
-				const ssimScore = ssim.All || 0;
-				const passed = ssimScore > 0.9;
-				if (!passed) {
-					console.log("❌ Failed at SSIM", inputPath, ssimScore);
-					resolve(false);
-				} else {
-					resolve(passed);
-				}
+		_getVideoDurations(inputPath)
+			.then((inputDurations) => {
+				_getVideoDurations(outputPath)
+					.then((outputDurations) => {
+						resolve(inputDurations === outputDurations);
+					})
+					.catch(reject);
 			})
 			.catch(reject);
 	});
 }
 
-export async function testCompressImages({
-	targetFormat,
+export async function testCompressVideos({
+	codecType,
+	encodeLevel,
 	lookUpPatterns,
 	ignorePatterns,
 	destinationBasePath,
 }: {
-	targetFormat: ImageWorkerOutputTypes;
+	codecType: CodecType;
+	encodeLevel: VideoEncodeLevels;
 	lookUpPatterns: string[];
 	ignorePatterns: string[];
 	destinationBasePath: string;
 }) {
-	await minomax.compressImages({
-		targetFormat: targetFormat,
+	await minomax.compressVideos({
+		codecType: codecType,
+		encodeLevel: encodeLevel,
 		lookUpPatterns: lookUpPatterns,
 		ignorePatterns: ignorePatterns,
 		destinationBasePath: destinationBasePath,
 	});
 
-	/* 1)To check if file discovery working propery */
-	const expectedImageFileCount = 5; //hardcoded as per test samples
+	/* 1) To check if file discovery working propery */
+	const expectedVideoFileCount = 1; //hardcoded as per test samples
 
 	/* 2) get files list on destination to check output availablity with 3)targetformat */
+	const targetFormat = ["mav1", "mx265"].includes(codecType)
+		? "mp4"
+		: "webm";
 	const destinatinatedFiles = globSync(
 		`${destinationBasePath}/**/*.${targetFormat}`,
 		{ nodir: true },
 	);
+
 	const destinatinatedFilesCount = destinatinatedFiles.length;
 
 	const fileLookup_destinatedFiles_outputType_PASSED =
-		destinatinatedFilesCount === expectedImageFileCount;
+		destinatinatedFilesCount === expectedVideoFileCount;
 
 	console.log(
-		"Image - fileLookup_destinatedFiles_outputType:",
+		"Video - fileLookup_destinatedFiles_outputType:",
 		fileLookup_destinatedFiles_outputType_PASSED
 			? "✅ PASSED"
 			: "❌ Failed",
@@ -81,42 +108,42 @@ export async function testCompressImages({
 	const sizeComparison_PASSED = oldFilesSize > destinatinatedFilesSize;
 
 	console.log(
-		"Image sizeComparison:",
+		"Video sizeComparison:",
 		sizeComparison_PASSED ? "✅ PASSED" : "❌ Failed",
 	);
 	console.log(
-		"🚀 Image File Sizes reduced by",
+		"🚀 Video File Sizes reduced by",
 		100 - (destinatinatedFilesSize / oldFilesSize) * 100,
 		"%",
 	);
 
 	/* 5) File integrity test  */
 	const integrityPromises = oldFiles.map(
-		(inputImagePath: string) => () => {
-			const outputImagePath = join(
+		(inputVidoePath: string) => () => {
+			const outputVideoPath = join(
 				destinationBasePath,
 				`${relative(
 					process.cwd(),
 					join(
-						dirname(inputImagePath),
-						basename(inputImagePath, extname(inputImagePath)),
+						dirname(inputVidoePath),
+						basename(inputVidoePath, extname(inputVidoePath)),
 					),
 				)}.${targetFormat}`,
 			);
-			return _compareImagesSSIM(inputImagePath, outputImagePath);
+			return _compareVideoDuration(inputVidoePath, outputVideoPath);
 		},
 	);
 
 	const integrityResponses = await batchProcess({
 		promisedProcs: integrityPromises,
 		batchSize: batchSize,
-		context: "Check Image Integrity",
+		context: "Check Video Integrity",
 	});
 
 	const Integrity_PASSED = integrityResponses.every((passed) => passed);
 
 	console.log(
-		"Image Integrity:",
+		"Video Integrity:",
 		Integrity_PASSED ? "✅ PASSED" : "❌ Failed",
 	);
 

@@ -200,7 +200,10 @@ export default class VideoWorker {
 
 			console.log(`Number of videos in queue: ${videoPaths.length}`);
 			console.log(
-				`Number of encodes at a time: ${videoEncodeBatchSize}\n`,
+				`Number of encodes at a time: ${Math.min(
+					videoEncodeBatchSize,
+					videoPaths.length,
+				)}\n`,
 			);
 
 			const progressBar = initProgressBar({ context: "Encoding Videos" });

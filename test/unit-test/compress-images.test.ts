@@ -1,6 +1,6 @@
 import { testCompressImages } from "./util.compress-images";
 
-const destinationBasePath = "test/.temp-artifacts";
+const destinationBasePath = "test/.temp-artifacts/images";
 const targetFormat = "webp";
 const lookUpPatterns = ["test/samples/images/**"];
 const ignorePatterns = [
