@@ -13,8 +13,7 @@ import { freemem } from "node:os";
 import { dirname, join, relative } from "node:path";
 
 export function terminate({ reason }: { reason: string }): never {
-	console.error(reason);
-	process.exit(1);
+	throw new Error(reason);
 }
 
 export function makeDirf(dirPath: string): void {
