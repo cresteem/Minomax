@@ -35,7 +35,7 @@ export default class Minifier {
 							resolve(result?.code || "");
 						})
 						.catch((err) => {
-							console.error("Error while minifying javascript\n,", err);
+							reject("Error while minifying javascript\n," + err);
 						});
 				})
 				.catch(reject);

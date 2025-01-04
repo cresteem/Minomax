@@ -435,11 +435,7 @@ export class Minomax {
 	}) {
 		this.#beforeAll();
 
-		ignorePatterns = [
-			...ignorePatterns,
-			"node_modules/**",
-			`${destinationBasePath}/**`,
-		];
+		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
 
 		const webDocs: string[] = await getAvailableFiles({
 			lookUpPattern: lookUpPatterns,
