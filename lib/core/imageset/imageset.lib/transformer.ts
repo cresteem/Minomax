@@ -82,11 +82,10 @@ export default class ImgTagTransformer {
 	}
 
 	#_imgTagBuilder(
-		pictureTag: string,
 		imagePath: string,
 		attrRecord: Record<string, string> | undefined,
 	) {
-		pictureTag += `<img src="${imagePath}" `;
+		let imgTag = `<img src="${imagePath}" `;
 
 		//setting attributes
 		for (const [attrname, attrValue] of Object.entries(attrRecord || {})) {
@@ -94,13 +93,13 @@ export default class ImgTagTransformer {
 				continue;
 			}
 
-			pictureTag += ` ${attrname}${attrValue ? `="${attrValue}"` : ""}`;
+			imgTag += ` ${attrname}${attrValue ? `="${attrValue}"` : ""}`;
 		}
 
 		//closing img tag
-		pictureTag += "/>";
+		imgTag += "/>";
 
-		return pictureTag;
+		return imgTag;
 	}
 
 	#_getImageRelPath(
@@ -144,7 +143,7 @@ export default class ImgTagTransformer {
 			pictureTags[htmlTagRecord.htmlFile] = [];
 
 			for (const srcRecord of htmlTagRecord.imageRecords) {
-				let pictureTag: string;
+				let pictureTag: string = "";
 
 				const imageLink = srcRecord.imageLink;
 
@@ -164,7 +163,6 @@ export default class ImgTagTransformer {
 						imageSetsPaths[imageUniqueKey]["svg"],
 					);
 					pictureTag = this.#_imgTagBuilder(
-						"",
 						relativeSrcPath,
 						srcRecord.attributes,
 					);
@@ -196,7 +194,6 @@ export default class ImgTagTransformer {
 					);
 
 					pictureTag += this.#_imgTagBuilder(
-						pictureTag,
 						fallbackSrcPath,
 						srcRecord.attributes,
 					);
@@ -240,7 +237,6 @@ export default class ImgTagTransformer {
 
 							pictureTags[htmlFile].forEach((pictureTagMeta) => {
 								//replace tags
-
 								updatedContent = updatedContent.replace(
 									pictureTagMeta.imgTagReference,
 									pictureTagMeta.newTag,

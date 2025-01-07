@@ -458,7 +458,7 @@ export class Minomax {
 	}
 
 	async generateImageSets({
-		lookUpPatterns = this.configurations.lookUpPatterns.image,
+		lookUpPatterns = this.configurations.lookUpPatterns.webDoc,
 		destinationBasePath = this.configurations.destPath,
 		ignorePatterns = this.configurations.ignorePatterns,
 	}: {
@@ -468,17 +468,15 @@ export class Minomax {
 	}) {
 		this.#beforeAll();
 
-		ignorePatterns = [
-			...ignorePatterns,
-			"node_modules/**",
-			`${destinationBasePath}/**`,
-		];
+		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
 
-		const htmlFiles: string[] = await getAvailableFiles({
-			lookUpPattern: lookUpPatterns,
-			ignorePattern: ignorePatterns,
-			context: "Html Files at generateImageSets()",
-		});
+		const htmlFiles: string[] = (
+			await getAvailableFiles({
+				lookUpPattern: lookUpPatterns,
+				ignorePattern: ignorePatterns,
+				context: "Html Files at generateImageSets()",
+			})
+		).filter((file) => extname(file) === ".html");
 
 		try {
 			await this.#imageGenerator.generate({

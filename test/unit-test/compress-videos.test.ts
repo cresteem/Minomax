@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import { testCompressVideos } from "./util.compress-videos";
 
 const destinationBasePath = "test/.temp-artifacts/videos";
@@ -17,3 +18,7 @@ test("Unit Test - compressVideos()", async () => {
 		}),
 	).toBe(true);
 }, 60000);
+
+afterAll(() => {
+	rm(destinationBasePath, { force: true, recursive: true });
+});

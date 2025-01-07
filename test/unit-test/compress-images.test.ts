@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import { testCompressImages } from "./util.compress-images";
 
 const destinationBasePath = "test/.temp-artifacts/images";
@@ -18,3 +19,7 @@ test("Unit Test - compressImages()", async () => {
 		}),
 	).toBe(true);
 }, 60000);
+
+afterAll(() => {
+	rm(destinationBasePath, { force: true, recursive: true });
+});

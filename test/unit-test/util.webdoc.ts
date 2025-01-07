@@ -1,4 +1,4 @@
-import { CheerioAPI, load } from "cheerio";
+import { CheerioAPI, load } from "cheerio/slim";
 import { parse } from "css";
 import { ESLint } from "eslint";
 import { globSync } from "glob";
