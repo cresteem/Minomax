@@ -83,7 +83,7 @@ export class Minomax {
 		webDocLookUpPatterns?: string[];
 		destinationBasePath?: string;
 		removeOld?: boolean;
-	}) {
+	}): Promise<void> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
@@ -211,7 +211,7 @@ export class Minomax {
 		lookUpPatterns?: string[];
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
-	}) {
+	}): Promise<void> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
@@ -248,7 +248,7 @@ export class Minomax {
 		encodeLevel?: VideoEncodeLevels;
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
-	}) {
+	}): Promise<void> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
@@ -335,15 +335,6 @@ export class Minomax {
 							//only hold existing videoPaths
 							Object.entries(metas).forEach(
 								([videoPath, thumbnailPath]) => {
-									/* 	if (destinationBase) {
-										const backLevel = destinationBase?.split(sep)?.length;
-
-										videoPath = relative(process.cwd(), videoPath)
-											?.split(sep)
-											?.slice(backLevel)
-											?.join(sep);
-									} */
-
 									if (existsSync(videoPath)) {
 										result[videoPath] = relative(
 											process.cwd(),
@@ -432,7 +423,7 @@ export class Minomax {
 		lookUpBasePath?: string;
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
-	}) {
+	}): Promise<void> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
@@ -465,7 +456,7 @@ export class Minomax {
 		lookUpPatterns?: string[];
 		destinationBasePath?: string;
 		ignorePatterns?: string[];
-	}) {
+	}): Promise<void> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
