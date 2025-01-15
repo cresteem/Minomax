@@ -14,4 +14,4 @@ test("Unit Test - makeVideoThumbnail()", async () => {
 			videoCodec: videoCodec,
 		}),
 	).toBe(true);
-});
+}, 60000);

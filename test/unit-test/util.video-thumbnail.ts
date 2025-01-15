@@ -46,26 +46,19 @@ function _expectedVideoExtension(
 	return [videoUrl, extname(videoUrl) === expectedVideoExtension];
 }
 
-export async function testVideoThumbnailMaker({
+export async function videoThumnailGenTestConditions({
 	htmlLookupPattern,
 	ignorePatterns,
 	variableImgFormat,
 	videoCodec,
+	testTriggeredOn,
 }: {
 	htmlLookupPattern: string[];
 	ignorePatterns: string[];
 	variableImgFormat: ImageWorkerOutputTypes;
 	videoCodec: CodecType;
-}) {
-	const testTriggeredOn = Date.now(); // for file mod filter - cond (1)
-
-	await minomax.makeVideoThumbnail({
-		htmlLookupPattern: htmlLookupPattern,
-		ignorePatterns: ignorePatterns,
-		variableImgFormat: variableImgFormat,
-		videoCodec: videoCodec,
-	});
-
+	testTriggeredOn: number;
+}): Promise<boolean> {
 	//(1) For file discovery and mod test condition
 	const expectedHTMLCount = 3; //hardcoded as per test samples
 
@@ -103,13 +96,32 @@ export async function testVideoThumbnailMaker({
 
 								const videoRelPath = join(dirname(targetFile), videoUrl);
 
+								/* console.debug({
+									targetFile,
+									posterLink,
+									posterRelPath,
+									videoRelPath,
+								}); */
+
+								const posterExisting = _posterExist(posterRelPath);
+								const videoExisting = _videoExist(videoRelPath);
+								const expectedPosterExtension = _expectedPosterExtension(
+									posterRelPath,
+									variableImgFormat,
+								);
+
+								/* console.debug({
+									videoUrl,
+									posterExisting,
+									videoExisting,
+									expectedPosterExtension,
+									expectedVideoExtension,
+								}); */
+
 								const allCondition_PASSED =
-									_posterExist(posterRelPath) &&
-									_videoExist(videoRelPath) &&
-									_expectedPosterExtension(
-										posterRelPath,
-										variableImgFormat,
-									) &&
+									posterExisting &&
+									videoExisting &&
+									expectedPosterExtension &&
 									expectedVideoExtension;
 
 								if (allCondition_PASSED) {
@@ -160,4 +172,33 @@ export async function testVideoThumbnailMaker({
 		posterVideoExistance_imgExt_videoExt_PASSED;
 
 	return PASSED;
+}
+
+export async function testVideoThumbnailMaker({
+	htmlLookupPattern,
+	ignorePatterns,
+	variableImgFormat,
+	videoCodec,
+}: {
+	htmlLookupPattern: string[];
+	ignorePatterns: string[];
+	variableImgFormat: ImageWorkerOutputTypes;
+	videoCodec: CodecType;
+}) {
+	const testTriggeredOn = Date.now(); // for file mod filter - cond (1)
+
+	await minomax.makeVideoThumbnail({
+		htmlLookupPattern: htmlLookupPattern,
+		ignorePatterns: ignorePatterns,
+		variableImgFormat: variableImgFormat,
+		videoCodec: videoCodec,
+	});
+
+	return await videoThumnailGenTestConditions({
+		htmlLookupPattern: htmlLookupPattern,
+		ignorePatterns: ignorePatterns,
+		variableImgFormat: variableImgFormat,
+		videoCodec: videoCodec,
+		testTriggeredOn: testTriggeredOn,
+	});
 }

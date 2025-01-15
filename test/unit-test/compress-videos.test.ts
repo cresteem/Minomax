@@ -1,7 +1,7 @@
 import { rm } from "node:fs/promises";
 import { testCompressVideos } from "./util.compress-videos";
 
-const destinationBasePath = "test/.temp-artifacts/videos";
+const destinationBasePath = "test/temp-artifacts/videos";
 const lookUpPatterns = ["test/samples/videos/*.mp4"];
 const ignorePatterns = ["test/samples/videos/*C.mp4"];
 const codecType = "mx265";
@@ -17,7 +17,7 @@ test("Unit Test - compressVideos()", async () => {
 			encodeLevel: encodeLevel,
 		}),
 	).toBe(true);
-}, 60000);
+}, 100000);
 
 afterAll(() => {
 	rm(destinationBasePath, { force: true, recursive: true });

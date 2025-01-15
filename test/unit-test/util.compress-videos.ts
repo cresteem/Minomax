@@ -5,7 +5,6 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 import { globSync } from "glob";
-import { rmSync } from "node:fs";
 import { cpus } from "node:os";
 import { basename, dirname, extname, join, relative } from "node:path";
 import { CodecType, VideoEncodeLevels } from "../../lib/types";
@@ -51,38 +50,38 @@ function _compareVideoDuration(
 	});
 }
 
-export async function testCompressVideos({
+export async function videoWorkerTestConditions({
 	codecType,
-	encodeLevel,
 	lookUpPatterns,
 	ignorePatterns,
 	destinationBasePath,
+	expectedVideoFileCount,
 }: {
 	codecType: CodecType;
-	encodeLevel: VideoEncodeLevels;
 	lookUpPatterns: string[];
 	ignorePatterns: string[];
 	destinationBasePath: string;
-}) {
-	await minomax.compressVideos({
-		codecType: codecType,
-		encodeLevel: encodeLevel,
-		lookUpPatterns: lookUpPatterns,
-		ignorePatterns: ignorePatterns,
-		destinationBasePath: destinationBasePath,
+	expectedVideoFileCount?: number;
+}): Promise<boolean> {
+	/* 1) To check if file discovery working propery */
+	/* expectedVideoFileCount; */
+	const oldFiles = globSync(lookUpPatterns, {
+		ignore: ignorePatterns,
+		nodir: true,
+		absolute: true,
 	});
 
-	/* 1) To check if file discovery working propery */
-	const expectedVideoFileCount = 1; //hardcoded as per test samples
+	expectedVideoFileCount = expectedVideoFileCount || oldFiles.length;
 
 	/* 2) get files list on destination to check output availablity with 3)targetformat */
 	const targetFormat = ["mav1", "mx265"].includes(codecType)
 		? "mp4"
 		: "webm";
-	const destinatinatedFiles = globSync(
-		`${destinationBasePath}/**/*.${targetFormat}`,
-		{ nodir: true },
-	);
+	const destinatinatedFiles = globSync(`**/*.${targetFormat}`, {
+		nodir: true,
+		cwd: destinationBasePath,
+		absolute: true,
+	});
 
 	const destinatinatedFilesCount = destinatinatedFiles.length;
 
@@ -97,15 +96,27 @@ export async function testCompressVideos({
 	);
 
 	/* 4) Size comparison */
-	const oldFiles = globSync(lookUpPatterns, {
-		ignore: ignorePatterns,
-		nodir: true,
-	});
+
 	const oldFilesSize = await calculateTotalSize(oldFiles);
 	const destinatinatedFilesSize = await calculateTotalSize(
 		destinatinatedFiles,
 	);
+	/* console.debug(
+		oldFiles,
+		destinatinatedFiles,
+		oldFilesSize,
+		destinatinatedFilesSize,
+	); */
 	const sizeComparison_PASSED = oldFilesSize > destinatinatedFilesSize;
+
+	/* writeFileSync(
+		"cvid.log.txt",
+		JSON.stringify(
+			{ lookUpPatterns, oldFiles, destinatinatedFiles },
+			null,
+			3,
+		),
+	); */
 
 	console.log(
 		"Video sizeComparison:",
@@ -147,13 +158,39 @@ export async function testCompressVideos({
 		Integrity_PASSED ? "✅ PASSED" : "❌ Failed",
 	);
 
-	//cleanup
-	rmSync(destinationBasePath, { recursive: true, force: true });
-
 	const testPassed =
 		fileLookup_destinatedFiles_outputType_PASSED &&
 		sizeComparison_PASSED &&
 		Integrity_PASSED;
-
 	return testPassed;
+}
+
+export async function testCompressVideos({
+	codecType,
+	encodeLevel,
+	lookUpPatterns,
+	ignorePatterns,
+	destinationBasePath,
+}: {
+	codecType: CodecType;
+	encodeLevel: VideoEncodeLevels;
+	lookUpPatterns: string[];
+	ignorePatterns: string[];
+	destinationBasePath: string;
+}) {
+	await minomax.compressVideos({
+		codecType: codecType,
+		encodeLevel: encodeLevel,
+		lookUpPatterns: lookUpPatterns,
+		ignorePatterns: ignorePatterns,
+		destinationBasePath: destinationBasePath,
+	});
+
+	return await videoWorkerTestConditions({
+		codecType: codecType,
+		lookUpPatterns: lookUpPatterns,
+		ignorePatterns: ignorePatterns,
+		destinationBasePath: destinationBasePath,
+		expectedVideoFileCount: 1,
+	});
 }

@@ -24,6 +24,6 @@ export async function calculateTotalSize(
 		context: "Files size calcultion",
 	});
 
-	const totalSize = fileSizeResponses.reduce((a, b) => a + b);
+	const totalSize = fileSizeResponses.reduce((a, b) => a + b, 0);
 	return totalSize;
 }

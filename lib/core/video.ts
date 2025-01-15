@@ -183,10 +183,11 @@ export default class VideoWorker {
 	) {
 		videoPaths = Array.from(new Set(videoPaths)); //keep unique videos path
 
-		const videoEncodeBatchSize: number = getFreeMemBatchSize({
-			memPerProc: 1500,
-			cPerBatchSize: this.#batchSizes.cPer,
-		});
+		const videoEncodeBatchSize: number =
+			getFreeMemBatchSize({
+				memPerProc: 1500,
+				cPerBatchSize: this.#batchSizes.cPer,
+			}) || 1;
 
 		/* dumpRunTimeData({
 			data: videoPaths,

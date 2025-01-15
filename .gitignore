@@ -3,3 +3,5 @@ node_modules
 .pixteroid
 outputs
 minomax.err.log
+test/temp-artifacts
+*log*

@@ -83,7 +83,11 @@ export class Minomax {
 		webDocLookUpPatterns?: string[];
 		destinationBasePath?: string;
 		removeOld?: boolean;
-	}): Promise<void> {
+	}): Promise<{
+		availableImages: string[];
+		availableVideos: string[];
+		thumnailCount: number;
+	}> {
 		this.#beforeAll();
 
 		ignorePatterns = [...ignorePatterns, `${destinationBasePath}/**`];
@@ -135,6 +139,7 @@ export class Minomax {
 			htmlFiles: transformedHtmlFiles,
 			variableImgFormat: targetFormat,
 			videoCodec: videoWorkerParams.codecType,
+			basePath: destinationBasePath,
 		});
 		const availableVideos = Object.keys(videoMetas);
 		const thumbnails = Object.values(videoMetas);
@@ -199,6 +204,12 @@ export class Minomax {
 		});
 
 		this.#afterAll();
+
+		return {
+			availableImages: imagePaths,
+			thumnailCount: thumbnails.length,
+			availableVideos: availableVideos,
+		};
 	}
 
 	async compressImages({
@@ -281,15 +292,15 @@ export class Minomax {
 		variableImgFormat = false,
 		videoCodec = false,
 		ignorePatterns = this.configurations.ignorePatterns,
-	}: /* destinationBase = this.configurations.destPath, */
-	{
+		basePath = "",
+	}: {
 		htmlFiles?: string[];
 		htmlLookupPattern?: string[];
 		seekPercentage?: number;
 		variableImgFormat?: ImageWorkerOutputTypes | false;
 		videoCodec?: CodecType | false;
 		ignorePatterns?: string[] | string;
-		/* destinationBase?: string; */
+		basePath?: string;
 	}): Promise<Record<string, string>> {
 		if (!htmlFiles && !htmlLookupPattern) {
 			terminate({
@@ -306,6 +317,10 @@ export class Minomax {
 				ignorePattern: ignorePatterns,
 				context: "HTML Files at makeVideoThumbnail()",
 			});
+		}
+
+		if (!htmlFiles?.length) {
+			return {};
 		}
 
 		console.log(
@@ -335,8 +350,10 @@ export class Minomax {
 							//only hold existing videoPaths
 							Object.entries(metas).forEach(
 								([videoPath, thumbnailPath]) => {
-									if (existsSync(videoPath)) {
-										result[videoPath] = relative(
+									const realVidPath = relative(basePath, videoPath);
+
+									if (existsSync(realVidPath)) {
+										result[realVidPath] = relative(
 											process.cwd(),
 											thumbnailPath,
 										);
@@ -382,7 +399,7 @@ export class Minomax {
 						.thumbnailGenerator({
 							videoPath: videoPath,
 							seekPercentage: seekPercentage,
-							basepath: process.cwd(),
+							basepath: basePath,
 						})
 						.then(() => {
 							progressBar.increment();

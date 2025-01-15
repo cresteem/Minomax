@@ -169,10 +169,11 @@ export default class ImageSetGenerator {
 		variableImgFormat: ImageWorkerOutputTypes | false;
 		destinationBase: string;
 	}): Promise<{ linkedImages: string[]; transformedHtmlFiles: string[] }> {
-		const pupeeterBatchSize: number = getFreeMemBatchSize({
-			memPerProc: 2000,
-			cPerBatchSize: this.#batchSizes.cPer,
-		});
+		const pupeeterBatchSize: number =
+			getFreeMemBatchSize({
+				memPerProc: 2000,
+				cPerBatchSize: this.#batchSizes.cPer,
+			}) || 1;
 
 		console.log(
 			`\n[${currentTime()}] +++> ⏰ Imageset generation started.`,

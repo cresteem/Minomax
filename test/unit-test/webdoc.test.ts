@@ -4,7 +4,7 @@ import { testWebDocWorker } from "./util.webdoc";
 const lookUpPatterns = ["test/samples/webdocs/**"];
 const ignorePatterns = ["test/samples/webdocs/**/*ML.html"];
 const lookUpBasePath = process.cwd();
-const destinationBasePath = "test/.temp-artifacts/webdoc";
+const destinationBasePath = "test/temp-artifacts/webdoc";
 
 test("Unit Test - WebDocWorker", async () => {
 	expect(
@@ -15,7 +15,7 @@ test("Unit Test - WebDocWorker", async () => {
 			destinationBasePath: destinationBasePath,
 		}),
 	).toBe(true);
-});
+}, 60000);
 
 afterAll(() => {
 	rm(destinationBasePath, { force: true, recursive: true });

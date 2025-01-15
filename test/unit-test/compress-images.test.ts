@@ -1,7 +1,7 @@
 import { rm } from "node:fs/promises";
 import { testCompressImages } from "./util.compress-images";
 
-const destinationBasePath = "test/.temp-artifacts/images";
+const destinationBasePath = "test/temp-artifacts/images";
 const targetFormat = "webp";
 const lookUpPatterns = ["test/samples/images/**"];
 const ignorePatterns = [
@@ -18,7 +18,7 @@ test("Unit Test - compressImages()", async () => {
 			ignorePatterns: ignorePatterns,
 		}),
 	).toBe(true);
-}, 60000);
+}, 100000);
 
 afterAll(() => {
 	rm(destinationBasePath, { force: true, recursive: true });

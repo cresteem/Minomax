@@ -1,7 +1,7 @@
 /* Base styles for images */
 img {
     display: block;
-    width: 1px;
+    width: 50px;
     height: auto;
 }
 

@@ -11,28 +11,23 @@ import { calculateTotalSize } from "./util.base";
 
 const minomax = new Minomax();
 
-export async function testWebDocWorker({
+export async function webdocTestConditions({
 	lookUpPatterns,
 	lookUpBasePath,
 	destinationBasePath,
 	ignorePatterns,
+	transformedHtml = false, //force true htmlintegrity if html transformed at imgsetgen
 }: {
 	lookUpPatterns: string[];
 	lookUpBasePath: string;
 	destinationBasePath: string;
 	ignorePatterns: string[];
-}) {
-	await minomax.minifyWebdoc({
-		lookUpBasePath: lookUpBasePath,
-		lookUpPatterns: lookUpPatterns,
-		destinationBasePath: destinationBasePath,
-		ignorePatterns: ignorePatterns,
-	});
-
+	transformedHtml?: boolean;
+}): Promise<boolean> {
 	/* 1) file discovery and 2) output destination test */
 	const expectedFiles = globSync(lookUpPatterns, {
 		cwd: lookUpBasePath,
-		ignore: ignorePatterns,
+		ignore: [...ignorePatterns, `${destinationBasePath}/**/*`],
 		absolute: true,
 		nodir: true,
 	});
@@ -42,6 +37,15 @@ export async function testWebDocWorker({
 		absolute: true,
 		nodir: true,
 	});
+
+	/* 	await writeContent(
+		JSON.stringify(
+			{ lookUpPatterns, lookUpBasePath, expectedFiles, destinatedFiles },
+			null,
+			3,
+		),
+		"wdw.log.txt",
+	); */
 
 	const fileDiscovery_OPDest_PASSED =
 		expectedFiles.length === destinatedFiles.length;
@@ -71,10 +75,12 @@ export async function testWebDocWorker({
 	);
 
 	/* 3.2 Integrity test */
-	const htmlIntegrity_PASSED = await new HTMLIntegrity().check(
-		destinatedFiles.filter((file) => extname(file) === ".html"),
-		destinationBasePath,
-	);
+	const htmlIntegrity_PASSED =
+		transformedHtml ||
+		(await new HTMLIntegrity().check(
+			destinatedFiles.filter((file) => extname(file) === ".html"),
+			destinationBasePath,
+		));
 	console.log(
 		"HTML Integrity:",
 		htmlIntegrity_PASSED ? "✅ PASSED" : "❌ Failed",
@@ -104,6 +110,32 @@ export async function testWebDocWorker({
 		jsIntegrity_PASSED;
 
 	return PASSED;
+}
+
+export async function testWebDocWorker({
+	lookUpPatterns,
+	lookUpBasePath,
+	destinationBasePath,
+	ignorePatterns,
+}: {
+	lookUpPatterns: string[];
+	lookUpBasePath: string;
+	destinationBasePath: string;
+	ignorePatterns: string[];
+}) {
+	await minomax.minifyWebdoc({
+		lookUpBasePath: lookUpBasePath,
+		lookUpPatterns: lookUpPatterns,
+		destinationBasePath: destinationBasePath,
+		ignorePatterns: ignorePatterns,
+	});
+
+	return await webdocTestConditions({
+		lookUpBasePath: lookUpBasePath,
+		lookUpPatterns: lookUpPatterns,
+		destinationBasePath: destinationBasePath,
+		ignorePatterns: ignorePatterns,
+	});
 }
 
 class HTMLIntegrity {
@@ -137,9 +169,15 @@ class HTMLIntegrity {
 							const same = sourceDOM === minifiedDOM;
 							resolve(same);
 						})
-						.catch(reject);
+						.catch((err) => {
+							console.error(err);
+							reject(err);
+						});
 				})
-				.catch(reject);
+				.catch((err) => {
+					console.error(err);
+					reject(err);
+				});
 		});
 	}
 
@@ -156,7 +194,10 @@ class HTMLIntegrity {
 
 					this._compareDOMs(sourceFile, minifiedFile)
 						.then(resolve)
-						.catch(reject);
+						.catch((err) => {
+							console.error(err);
+							reject(err);
+						});
 				}),
 		);
 
@@ -166,6 +207,7 @@ class HTMLIntegrity {
 			context: "HTML integrity",
 		});
 
+		/* console.debug(minifiedFiles, integrityResponses); */
 		return integrityResponses.every((passed) => passed);
 	}
 }

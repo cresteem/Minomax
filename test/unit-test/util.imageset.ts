@@ -91,6 +91,12 @@ async function _validateTagTransformation(
 
 								if (!hasMediaQuery || !existsSync(sourceAbsPath)) {
 									reject("No MediaQuery or source image not exists");
+
+									console.debug(
+										"hasMediaQuery:",
+										hasMediaQuery,
+										sourceAbsPath,
+									);
 								}
 							}); // (2) Media_&_Link_PASSED
 
@@ -126,7 +132,7 @@ async function _validateTagTransformation(
 			});
 
 			return a;
-		}).size === expectedPictureTagCount;
+		}, new Set()).size === expectedPictureTagCount;
 
 	return PASSED;
 }
@@ -148,26 +154,27 @@ function _isValidDestPaths(
 	);
 }
 
-export async function testImageSet({
+export async function imageSetTestConditions({
 	lookUpPatterns,
 	destinationBasePath,
 	ignorePatterns,
+	vidThumbnailCount = 0,
 }: {
 	lookUpPatterns: string[];
 	destinationBasePath: string;
 	ignorePatterns: string[];
-}) {
-	await minomax.generateImageSets({
-		lookUpPatterns: lookUpPatterns,
-		ignorePatterns: ignorePatterns,
-		destinationBasePath: destinationBasePath,
-	});
-
+	vidThumbnailCount?: number;
+}): Promise<boolean> {
 	const expectedHtmlFiles = globSync(lookUpPatterns, {
 		absolute: true,
 		nodir: true,
 		ignore: ignorePatterns,
 	}).filter((file) => extname(file) === ".html");
+
+	/* await writeContent(
+		JSON.stringify({ lookUpPatterns, expectedHtmlFiles }, null, 3),
+		"imgset.log.txt",
+	); */
 
 	const imgTagCountPromises = expectedHtmlFiles.map(
 		(htmlPath) => () => _countImageTags(htmlPath),
@@ -192,11 +199,15 @@ export async function testImageSet({
 		cwd: destinationBasePath,
 		nodir: true,
 		absolute: true,
-	});
+	}).filter((path) =>
+		[".avif", ".webp", ".jpg", ".svg", ".html", ".png"].includes(
+			extname(path),
+		),
+	); //only images and html
 
 	const destinatedFilesCount = destinatedFiles.length;
 	const expectedFilesInDestCount =
-		expectedHtmlFiles.length + totalExpectedImages;
+		expectedHtmlFiles.length + totalExpectedImages + vidThumbnailCount;
 
 	const expectedFilesInDest_PASSED =
 		expectedFilesInDestCount === destinatedFilesCount;
@@ -239,4 +250,26 @@ export async function testImageSet({
 		destPathValidation_PASSED;
 
 	return PASSED;
+}
+
+export async function testImageSet({
+	lookUpPatterns,
+	destinationBasePath,
+	ignorePatterns,
+}: {
+	lookUpPatterns: string[];
+	destinationBasePath: string;
+	ignorePatterns: string[];
+}) {
+	await minomax.generateImageSets({
+		lookUpPatterns: lookUpPatterns,
+		ignorePatterns: ignorePatterns,
+		destinationBasePath: destinationBasePath,
+	});
+
+	return await imageSetTestConditions({
+		lookUpPatterns: lookUpPatterns,
+		ignorePatterns: ignorePatterns,
+		destinationBasePath: destinationBasePath,
+	});
 }
