@@ -3,9 +3,8 @@ import { globSync } from "glob";
 import { cpus } from "node:os";
 import { extname } from "node:path";
 import { ImageWorkerOutputTypes } from "../../lib/types";
-import { batchProcess } from "../../lib/utils";
+import { batchProcess, calculateTotalSize } from "../../lib/utils";
 import { Minomax } from "../../minomax";
-import { calculateTotalSize } from "./util.base";
 
 const minomax = new Minomax();
 const batchSize = cpus().length;

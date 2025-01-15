@@ -5,9 +5,8 @@ import { globSync } from "glob";
 import { readFile } from "node:fs/promises";
 import { cpus } from "node:os";
 import { extname, resolve as fsResolve, relative } from "node:path";
-import { batchProcess } from "../../lib/utils";
+import { batchProcess, calculateTotalSize } from "../../lib/utils";
 import { Minomax } from "../../minomax";
-import { calculateTotalSize } from "./util.base";
 
 const minomax = new Minomax();
 

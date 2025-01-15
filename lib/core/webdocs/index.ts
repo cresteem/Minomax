@@ -1,7 +1,12 @@
 import { copyFile } from "node:fs/promises";
-import { extname, join, relative } from "node:path";
+import { dirname, extname, join, relative } from "node:path";
 import { BatchSizeType, HtmlOptions, WebDocOptions } from "../../types";
-import { batchProcess, currentTime } from "../../utils";
+import {
+	batchProcess,
+	compressionRatioLog,
+	currentTime,
+	makeDirf,
+} from "../../utils";
 import Minifier from "./minifier";
 import SelectorsMangler from "./selector-mangler/renamer";
 
@@ -31,8 +36,10 @@ export default class WebDocsWorker {
 		);
 
 		const copyPromises = destinationFilePaths.map(
-			(destinationPath, idx) => () =>
-				copyFile(sourceFiles[idx], destinationPath),
+			(destinationPath, idx) => () => {
+				makeDirf(dirname(destinationPath));
+				return copyFile(sourceFiles[idx], destinationPath);
+			},
 		);
 
 		await batchProcess({
@@ -55,18 +62,21 @@ export default class WebDocsWorker {
 			`\n[${currentTime()}] +++> ⏰ Web Docs minification started.`,
 		);
 
-		let sourceWebdocs: string[] = [];
+		let preprocessedWebDocs: string[] = [];
 
 		if (this.#selectorRenamer) {
 			const selectorsMangler = new SelectorsMangler({
 				batchSizes: this.#batchSizes,
 			});
-			sourceWebdocs = await selectorsMangler.renameSelectors({
+			preprocessedWebDocs = await selectorsMangler.renameSelectors({
 				webDocs: webDocs,
 				destinationBase: destinationBase,
 			});
 		} else {
-			sourceWebdocs = await this.#_justCopy(webDocs, destinationBase);
+			preprocessedWebDocs = await this.#_justCopy(
+				webDocs,
+				destinationBase,
+			);
 		}
 
 		const minifierBatchSize: number = this.#batchSizes.cPer;
@@ -76,7 +86,7 @@ export default class WebDocsWorker {
 
 		const webDocExtensions: string[] = [".html", ".css", ".js"];
 		for (const extension of webDocExtensions) {
-			const webdocs: string[] = sourceWebdocs.filter(
+			const webdocs: string[] = preprocessedWebDocs.filter(
 				(file) => extname(file) === extension,
 			);
 			await minifier.minify(
@@ -87,5 +97,7 @@ export default class WebDocsWorker {
 		}
 
 		console.log(`[${currentTime()}] +++> ✅ Web docs were minified.`);
+
+		await compressionRatioLog(webDocs, preprocessedWebDocs, "WebDoc");
 	}
 }

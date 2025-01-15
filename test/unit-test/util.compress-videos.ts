@@ -8,9 +8,9 @@ import { globSync } from "glob";
 import { cpus } from "node:os";
 import { basename, dirname, extname, join, relative } from "node:path";
 import { CodecType, VideoEncodeLevels } from "../../lib/types";
-import { batchProcess } from "../../lib/utils";
+
+import { batchProcess, calculateTotalSize } from "../../lib/utils";
 import { Minomax } from "../../minomax";
-import { calculateTotalSize } from "./util.base";
 
 const minomax = new Minomax();
 const batchSize = cpus().length;

@@ -21,6 +21,7 @@ import {
 } from "../../lib/types";
 import {
 	batchProcess,
+	compressionRatioLog,
 	currentTime,
 	getFreeMemBatchSize,
 	initProgressBar,
@@ -253,5 +254,24 @@ export default class VideoWorker {
 					error,
 			});
 		}
+
+		await compressionRatioLog(
+			videoPaths,
+			videoPaths.map((videoPath) =>
+				join(
+					basepath,
+					relative(
+						process.cwd(),
+						join(
+							dirname(videoPath),
+							`${basename(videoPath, extname(videoPath))}.${
+								["mx265", "mav1"].includes(codecType) ? "mp4" : "webm"
+							}`,
+						),
+					),
+				),
+			),
+			"Video",
+		);
 	}
 }

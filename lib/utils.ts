@@ -8,8 +8,8 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
-import { copyFile, writeFile } from "node:fs/promises";
-import { freemem } from "node:os";
+import { copyFile, stat, writeFile } from "node:fs/promises";
+import { cpus, freemem } from "node:os";
 import { dirname, join, relative } from "node:path";
 
 export function terminate({ reason }: { reason: string }): never {
@@ -216,4 +216,43 @@ export function getAvailableFiles({
 				);
 			});
 	});
+}
+
+export async function calculateTotalSize(
+	filePaths: string[],
+): Promise<number> {
+	const fileSizePromises: (() => Promise<number>)[] = filePaths.map(
+		(filePath) => () =>
+			new Promise((resolve, reject) => {
+				stat(filePath)
+					.then((stats) => {
+						resolve(stats?.size || 0);
+					})
+					.catch(reject);
+			}),
+	);
+
+	const fileSizeResponses: Awaited<number[]> = await batchProcess<number>({
+		promisedProcs: fileSizePromises,
+		batchSize: cpus().length,
+		context: "Files size calcultion",
+	});
+
+	const totalSize = fileSizeResponses.reduce((a, b) => a + b, 0);
+	return totalSize;
+}
+
+export async function compressionRatioLog(
+	sourceFiles: string[],
+	outputFiles: string[],
+	context: string,
+): Promise<void> {
+	const sourceFilesSize = await calculateTotalSize(sourceFiles);
+	const outputFilesSize = await calculateTotalSize(outputFiles);
+
+	console.log(
+		`🚀 ${context} file sizes reduced by ${Math.ceil(
+			100 - (outputFilesSize / sourceFilesSize) * 100,
+		)}%`,
+	);
 }

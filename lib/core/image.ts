@@ -15,6 +15,7 @@ import {
 } from "../types";
 import {
 	batchProcess,
+	compressionRatioLog,
 	currentTime,
 	initProgressBar,
 	logWriter,
@@ -330,5 +331,17 @@ export default class ImageWorker {
 				});
 			}
 		}
+
+		await compressionRatioLog(
+			imagePaths,
+			imagePaths.map((filePath) =>
+				join(
+					destinationBasePath,
+					dirname(relative(process.cwd(), filePath)),
+					`${basename(filePath, extname(filePath))}.${targetFormat}`,
+				),
+			),
+			"Image",
+		);
 	}
 }
