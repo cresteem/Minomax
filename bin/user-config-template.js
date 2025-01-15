@@ -161,5 +161,6 @@ const config = {
 	ignorePatterns: ["node_modules/**"],
 	destPath: "./minomax-output",
 	removeOld: true,
+	experimental: { selectorRenamer: false },
 };
 exports.default = config;

@@ -64,6 +64,7 @@ export class Minomax {
 		this.#webDocWorker = new WebDocsWorker(
 			this.configurations.webDoc,
 			this.#batchSizes,
+			this.configurations.experimental.selectorRenamer,
 		);
 	}
 

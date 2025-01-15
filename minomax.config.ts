@@ -162,6 +162,7 @@ const defaultConfig: ConfigurationOptions = {
 	ignorePatterns: ["node_modules/**"],
 	destPath: "./minomax-output",
 	removeOld: true,
+	experimental: { selectorRenamer: false },
 };
 
 export default defaultConfig;

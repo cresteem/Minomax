@@ -193,6 +193,9 @@ export interface ConfigurationOptions {
 	};
 	destPath: string;
 	removeOld: boolean;
+	experimental: {
+		selectorRenamer: boolean;
+	};
 }
 
 export interface ImageTagsRecord {

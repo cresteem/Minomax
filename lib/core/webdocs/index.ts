@@ -1,18 +1,47 @@
-import { extname } from "node:path";
+import { copyFile } from "node:fs/promises";
+import { extname, join, relative } from "node:path";
 import { BatchSizeType, HtmlOptions, WebDocOptions } from "../../types";
-import { currentTime } from "../../utils";
+import { batchProcess, currentTime } from "../../utils";
 import Minifier from "./minifier";
 import SelectorsMangler from "./selector-mangler/renamer";
 
 export default class WebDocsWorker {
 	#htmloptions: HtmlOptions;
 	#batchSizes: BatchSizeType;
+	#selectorRenamer: boolean;
 
-	constructor(webDocOptions: WebDocOptions, batchSizes: BatchSizeType) {
+	constructor(
+		webDocOptions: WebDocOptions,
+		batchSizes: BatchSizeType,
+		selectorRenamer: boolean,
+	) {
 		const { htmloptions } = webDocOptions;
 
 		this.#htmloptions = htmloptions;
 		this.#batchSizes = batchSizes;
+		this.#selectorRenamer = selectorRenamer;
+	}
+
+	async #_justCopy(
+		sourceFiles: string[],
+		destinationBase: string,
+	): Promise<string[]> {
+		const destinationFilePaths = sourceFiles.map((sourceFile) =>
+			join(destinationBase, relative(process.cwd(), sourceFile)),
+		);
+
+		const copyPromises = destinationFilePaths.map(
+			(destinationPath, idx) => () =>
+				copyFile(sourceFiles[idx], destinationPath),
+		);
+
+		await batchProcess({
+			promisedProcs: copyPromises,
+			batchSize: this.#batchSizes.cPer,
+			context: "_justCopy()",
+		});
+
+		return destinationFilePaths;
 	}
 
 	async uglify({
@@ -26,14 +55,19 @@ export default class WebDocsWorker {
 			`\n[${currentTime()}] +++> ⏰ Web Docs minification started.`,
 		);
 
-		const selectorsMangler = new SelectorsMangler({
-			batchSizes: this.#batchSizes,
-		});
-		const mangledFiles: Awaited<string[]> =
-			await selectorsMangler.renameSelectors({
+		let sourceWebdocs: string[] = [];
+
+		if (this.#selectorRenamer) {
+			const selectorsMangler = new SelectorsMangler({
+				batchSizes: this.#batchSizes,
+			});
+			sourceWebdocs = await selectorsMangler.renameSelectors({
 				webDocs: webDocs,
 				destinationBase: destinationBase,
 			});
+		} else {
+			sourceWebdocs = await this.#_justCopy(webDocs, destinationBase);
+		}
 
 		const minifierBatchSize: number = this.#batchSizes.cPer;
 		const minifier = new Minifier({ htmloptions: this.#htmloptions });
@@ -42,7 +76,7 @@ export default class WebDocsWorker {
 
 		const webDocExtensions: string[] = [".html", ".css", ".js"];
 		for (const extension of webDocExtensions) {
-			const webdocs: string[] = mangledFiles.filter(
+			const webdocs: string[] = sourceWebdocs.filter(
 				(file) => extname(file) === extension,
 			);
 			await minifier.minify(

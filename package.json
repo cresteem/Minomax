@@ -37,6 +37,7 @@
 		"dev": "cls && rimraf dist && tsc -p tscdev.json && ncp ./bin/user-config-template.js ./dist/bin/user-config-template.js",
 		"build": "cls && rimraf dist && tsc -p tsconfig.json && ncp ./bin/user-config-template.js ./dist/bin/user-config-template.js",
 		"test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathIgnorePatterns=main.test.ts && node --experimental-vm-modules ./node_modules/jest/bin/jest.js main.test.ts",
+		"cjest": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
 		"clean": "cls && rimraf dist",
 		"deploy": "yarn test && yarn build && yarn publish --access public && git push"
 	},
