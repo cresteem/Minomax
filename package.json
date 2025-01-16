@@ -1,7 +1,7 @@
 {
 	"name": "@cresteem/minomax",
 	"displayName": "Minomax",
-	"version": "0.1.1",
+	"version": "1.0.0-b",
 	"description": "Minomax is a versatile and powerful optimization tool designed to elevate the performance of your web projects. Whether you're a developer focused on improving load times or a business committed to delivering a seamless user experience, Minomax provides the comprehensive solution you need. By compressing images, videos, and web documents, and generating optimized content tailored for various devices, Minomax ensures your website runs faster, saves bandwidth, and delivers an exceptional experience across all platforms.",
 	"main": "./dist/minomax.js",
 	"types": "./dist/types/minomax.d.ts",
@@ -95,7 +95,7 @@
 		"jest": "29.7.0",
 		"ncp": "latest",
 		"rimraf": "latest",
-		"ts-node": "latest",
+		"ts-node": "^10.9.2",
 		"typescript": "5.7.3"
 	}
 }

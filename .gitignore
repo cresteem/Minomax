@@ -5,3 +5,4 @@ outputs
 minomax.err.log
 test/temp-artifacts
 *log*
+test/samples/videos/thumbnails
