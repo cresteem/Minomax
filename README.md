@@ -2,9 +2,23 @@
 
 ![Minomax logo](./logo/logo.webp)
 
-# Minomax - Elevate Your Web Performance with Advanced Optimization
+# Minomax - Comprehensive Web Optimization for Modern Needs
 
-<p id="intro">Minomax is a versatile and powerful optimization tool designed to elevate the performance of your web projects. Whether you're a developer focused on improving load times or a business committed to delivering a seamless user experience, Minomax provides the comprehensive solution you need. By compressing images, videos, and web documents, and generating optimized content tailored for various devices, Minomax ensures your website runs faster, saves bandwidth, and delivers an exceptional experience across all platforms.</p>
+<p id="intro">
+Minomax is a cutting-edge optimization tool tailored to enhance the performance of your web projects. Whether you're a developer striving for faster load times or a business aiming to deliver a seamless user experience, Minomax offers a powerful, all-encompassing solution.  
+
+By efficiently compressing images, videos, and web documents (HTML, CSS, and JavaScript), Minomax ensures minimal resource usage without sacrificing quality. Its advanced capabilities include generating image sets for various screen sizes—perfectly suited for devices ranging from smartphones to desktops—and creating video thumbnails to enhance accessibility.  
+</p>
+
+Minomax achieves impressive compression ratios:  
+- **97%** for images,
+- **93%** for videos, and  
+- **25%** for web documents (HTML, JS, CSS).  
+
+Unlike traditional optimization tools, Minomax integrates effortlessly with cloud services like Cloudflare, providing a dual advantage: pre-optimized resources from Minomax and further performance enhancements via cloud-based content delivery. With support for modern compression algorithms such as Brotli and Bzip, Minomax ensures unmatched efficiency, enabling your resources to be lighter, faster, and better optimized for on-premise or cloud-based infrastructures.  
+
+Elevate your web performance, save bandwidth, and deliver an exceptional user experience across all platforms with Minomax—the ultimate optimization solution.  
+
 
 ### Supported Platforms
 
@@ -25,16 +39,6 @@
 <span>
   <a href="">
     <img src="https://img.shields.io/github/commit-activity/m/cresteem/Minomax?style=for-the-badge&label=Commit%20Activity" alt="GitHub commit activity"/>
-  </a>
-</span>
-
-</p>
-
-<p>
-
-<span>
-  <a href="https://github.com/cresteem/Minomax/actions/workflows/test.yaml">
-    <img src="https://img.shields.io/github/actions/workflow/status/cresteem/Minomax/test.yaml?style=for-the-badge&label=Test%20Status" alt="GitHub Actions Test Status"/>
   </a>
 </span>
 
@@ -121,13 +125,48 @@
 
 ## Features and Benefits ✨
 
-* **Image Compression**: Automatically reduce image file sizes without sacrificing quality.
-* **Video Compression**: Achieve significant video compression, maintaining quality while reducing file size.
+* **Image Compression**: [Potential Compression ratio 97%](https://github.com/cresteem/Minomax-Demo?tab=readme-ov-file#image-compression) - Automatically reduce image file sizes without sacrificing quality.
+* **Video Compression**: [Potential Compression ratio 93%](https://github.com/cresteem/Minomax-Demo?tab=readme-ov-file#video-compression) - Achieve significant video compression, maintaining quality while reducing file size.
 * **Image Set Generation**: Create multiple image sets for different devices, enhancing visual performance across all screens.
-* **Web Document Compression**: Minify and compress JavaScript, HTML, and CSS files for faster load times.
+* **Web Document Compression**: [Potential Compression ratio 25%](https://github.com/cresteem/Minomax-Demo?tab=readme-ov-file#web-document-compression) Minify and compress JavaScript, HTML, and CSS files for faster load times.
 * **Automatic Tag Conversion**: Convert image tags into modern picture tags with media queries, catering to different devices with image sets.
-* **Video Thumbnails**: Generate video thumbnails and include them automatically in the HTML, similar to the handling of picture tags from image tags.
+* **Video Thumbnails**: Generate video thumbnails and include them automatically in the HTML video tag, which enhances user engagement and improves SEO by providing rich media previews.
 * **Flexible Operation**: Utilize Minomax through an API or a Command Line Interface (CLI), offering flexibility to suit your workflow.
+
+
+### Changelog 1.0.0 (17/01/2025) [link](https://github.com/cresteem/Minomax/issues/15#issue-2725152450)🛠️  
+
+- **Configuration Updates**:  
+  - Switched configuration style from JSON to JS.  
+  - Added type support in the configuration file.  
+  - Introduced a configuration template initialization command in the CLI.  
+
+- **Optimizations**:  
+  - Replaced CSSNano with Lightning CSS for CSS minification.  
+  - Enhanced multi-thread processing for IO-blocking operations by increasing UVLib pool size based on system CPU count (utilizing 80% of threads).  
+
+- **Features**:  
+  - Added a separate API for video thumbnail generation and linking.  
+  - Included a progress bar for all operations.  
+  - Enforced configuration files for all API and CLI default parameters to ensure simplicity and consistency.  
+  - Updated screen size constants to Tailwind-inspired names like `sm`, `md`, `lg`, and `xl`.  
+
+- **Code Quality**:  
+  - Improved code structure using a class-based approach.  
+  - Enhanced quality assurance with additional test cases.  
+
+- **UI and Branding**:  
+  - Introduced the official Minomax logo.  
+  - Added VS Code icon association for the configuration file.  
+
+- **Miscellaneous**:  
+  - Filtered out duplicates in video and image encoding, image sets, and web document minification.  
+  - Optimized default settings.  
+  - Updated dependencies.  
+  - Moved selectors renamer to the experimental section.  
+  - Print compressed ratios on result.
+
+---  
 
 ## Use Cases ✅
 * **Optimizing Images**: Compress large image files to speed up your website's load time.
@@ -282,19 +321,14 @@ Minomax is an open-source project developed and maintained by [DARSAN](https://d
 #### Topics
 
 <ul id="keywords">
-<li>web optimization</li>
-<li>image compression</li>
-<li>video compression</li>
-<li>web performance</li>
-<li>responsive design</li>
-<li>SEO</li>
-<li>CI/CD</li>
-<li>npm package</li>
-<li>automated optimization</li>
-<li>command line tool</li>
-<li>web development</li>
-<li>file compression</li>
-<li>dynamic content delivery</li>
-<li>fast load times</li>
-<li>api integration</li>
+  <li>web optimization</li>
+  <li>image compression</li>
+  <li>video compression</li>
+  <li>html minification</li>
+  <li>css compression</li>
+  <li>responsive design</li>
+  <li>content delivery</li>
+  <li>speed optimization</li>
+  <li>cloud optimization</li>
+  <li>compression algorithms</li>
 </ul>
