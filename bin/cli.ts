@@ -17,13 +17,13 @@ program
 	.command("prod")
 	.description("Run the minomax process")
 	.option(
-		"-f, --format [jpg | avif | webp]",
+		"-f, --format [jpg | avif | webp | svg]",
 		"Image output format",
 		"webp",
 	)
 	.option(
 		"-c, --codec [wav1 | mav1 | mx265]",
-		"Output video codec type",
+		"Video output codec type",
 		"wav1",
 	)
 	.option("-e, --encode [1 | 2 | 3]", "Video encoding level", parseInt, 3)
@@ -93,7 +93,7 @@ program
 	.option("-e, --encode [1 | 2 | 3]", "Video encoding level", parseInt, 3)
 	.option("-d, --dest <path>", "Destination base path", destPath)
 	.option(
-		"-I, --ignore <patterns>",
+		"-i, --ignore <patterns>",
 		"Ignore patterns",
 		(value) => value.split(","),
 		[],

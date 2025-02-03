@@ -1,7 +1,7 @@
 {
 	"name": "@cresteem/minomax",
 	"displayName": "Minomax",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": " Minomax is a cutting-edge optimization tool tailored to enhance the performance of your web projects. Whether you're a developer striving for faster load times or a business aiming to deliver a seamless user experience, Minomax offers a powerful, all-encompassing solution.    ",
 	"main": "./dist/minomax.js",
 	"types": "./dist/types/minomax.d.ts",
